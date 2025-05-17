@@ -4,11 +4,11 @@
     "slug": "app-note",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/capynotes-icon.png",
+    "icon": "./src/assets/capynotes-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/capynotes-icon.png",
+      "image": "./src/assets/capynotes-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/capynotes-icon.png",
+        "foregroundImage": "./src/assets/capynotes-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/capynotes-icon.png"
+      "favicon": "./src/assets/capynotes-icon.png"
     },
     "plugins": [
       "expo-sqlite",
@@ -31,10 +31,10 @@
       "expo-font",
       {
         "fonts": [
-          "./assets/fonts/Jua-Regular.ttf",
-          "./assets/fonts/Caveat-VariableFont.ttf",
-          "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
-          "./assets/fonts/Nunito-VariableFont_wght.ttf"
+          "./src/assets/fonts/Jua-Regular.ttf",
+          "./src/assets/fonts/Caveat-VariableFont.ttf",
+          "./src/assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+          "./src/assets/fonts/Nunito-VariableFont_wght.ttf"
         ],
         "android": {
           "fonts": [
@@ -42,7 +42,7 @@
               "fontFamily": "Jua",
               "fontDefinitions": [
                 {
-                  "path": "./assets/fonts/Jua-Regular.ttf",
+                  "path": "./src/assets/fonts/Jua-Regular.ttf",
                   "weight": "400"
                 }
               ]
@@ -51,7 +51,7 @@
               "fontFamily": "Caveat",
               "fontDefinitions": [
                 {
-                  "path": "./assets/fonts/Caveat-VariableFont.ttf",
+                  "path": "./src/assets/fonts/Caveat-VariableFont.ttf",
                   "weight": "400"
                 }
               ]
@@ -60,7 +60,7 @@
               "fontFamily": "Merriweather",
               "fontDefinitions": [
                 {
-                  "path": "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+                  "path": "./src/assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
                   "weight": "400"
                 }
               ]
@@ -69,7 +69,7 @@
               "fontFamily": "Nunito",
               "fontDefinitions": [
                 {
-                  "path": "./assets/fonts/Nunito-VariableFont_wght.ttf",
+                  "path": "./src/assets/fonts/Nunito-VariableFont_wght.ttf",
                   "weight": "400"
                 }
               ]
@@ -78,10 +78,10 @@
         },
         "ios": {
           "fonts": [
-            "./assets/fonts/Jua-Regular.ttf",
-            "./assets/fonts/Caveat-VariableFont.ttf",
-            "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
-            "./assets/fonts/Nunito-VariableFont_wght.ttf"
+            "./src/assets/fonts/Jua-Regular.ttf",
+            "./src/assets/fonts/Caveat-VariableFont.ttf",
+            "./src/assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+            "./src/assets/fonts/Nunito-VariableFont_wght.ttf"
           ]
         }
         }

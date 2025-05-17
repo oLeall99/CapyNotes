@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { SafeAreaView, StatusBar, View, Image } from 'react-native';
 import * as SQLite from 'expo-sqlite';
-import { initializeDatabse } from '../db/initializeDatabase';
+import { initializeDatabse } from './db/initializeDatabase';
 import { Home } from './screen/home';
 import Notas from './screen/notas';
 import Tarefas from './screen/tarefas';
@@ -9,7 +9,12 @@ import Metas from './screen/metas';
 import Config from './screen/config';
 import SearchBar from './components/search';
 import Footer from './components/footer';
-import LogoHeader from './components/LogoHeader';
+import LogoHeader from './components/Logo/LogoHeader';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+// Previne que a splash screen seja escondida automaticamente
+SplashScreen.preventAutoHideAsync();
 
 const pageLabels: Record<PageKey, string> = {
   home: 'Hoje',
@@ -23,6 +28,26 @@ type PageKey = 'home' | 'notas' | 'tarefas' | 'metas' | 'config';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<PageKey>('home');
+  
+  // Carrega todas as fontes necessárias para o app
+  const [fontsLoaded] = useFonts({
+    'Jua': require('./assets/fonts/Jua-Regular.ttf'),
+    'Caveat': require('./assets/fonts/Caveat-VariableFont.ttf'),
+    'Merriweather': require('./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf'),
+    'Nunito': require('./assets/fonts/Nunito-VariableFont_wght.ttf'),
+  });
+
+  // Esconde a splash screen quando as fontes estiverem carregadas
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  // Se as fontes não estiverem carregadas, não renderiza nada ainda
+  if (!fontsLoaded) {
+    return null;
+  }
 
   let PageComponent = null;
   switch (currentScreen) {
@@ -49,7 +74,9 @@ export default function App() {
     <>
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
         <StatusBar barStyle="dark-content" />
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}>
+        <SafeAreaView 
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}
+          onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
             paddingHorizontal: 20, 
@@ -60,7 +87,7 @@ export default function App() {
           }}>
             <LogoHeader />
             <Image 
-              source={require('../assets/capybara.png')} 
+              source={require('./assets/capybara.png')} 
               style={{ 
                 width: 40, 
                 height: 40, 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, View, StyleSheet, Text } from 'react-native';
+import { TextInput, View, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 interface SearchBarProps {
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 8,
     color: '#554b46',
+    fontFamily: 'Nunito',
   },
   icon: {
     marginLeft: 8,
