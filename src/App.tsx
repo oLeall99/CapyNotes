@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar } from 'react-native';
+import { SafeAreaView, StatusBar, View, Image } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { initializeDatabse } from '../db/initializeDatabase';
 import { Home } from './screen/home';
@@ -9,6 +9,7 @@ import Metas from './screen/metas';
 import Config from './screen/config';
 import SearchBar from './components/search';
 import Footer from './components/footer';
+import LogoHeader from './components/LogoHeader';
 
 const pageLabels: Record<PageKey, string> = {
   home: 'Hoje',
@@ -49,6 +50,24 @@ export default function App() {
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
         <StatusBar barStyle="dark-content" />
         <SafeAreaView style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}>
+          <View style={{ 
+            width: '100%', 
+            paddingHorizontal: 20, 
+            marginTop: 10, 
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <LogoHeader />
+            <Image 
+              source={require('../assets/capybara.png')} 
+              style={{ 
+                width: 40, 
+                height: 40, 
+                resizeMode: 'contain'
+              }} 
+            />
+          </View>
           {currentScreen !== 'config' && (
             <SearchBar label={pageLabels[currentScreen]} />
           )}

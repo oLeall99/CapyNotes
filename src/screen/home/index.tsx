@@ -26,7 +26,7 @@ export function Home() {
             <StatusBar barStyle="dark-content" />
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
-                    <Text style={styles.title}>CapyNotes</Text>
+                    <Text style={styles.title}>CapyNaotes</Text>
                 </View> 
             </SafeAreaView>
         </>

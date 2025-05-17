@@ -26,7 +26,66 @@
       "favicon": "./assets/capynotes-icon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+      "expo-font",
+      {
+        "fonts": [
+          "./assets/fonts/Jua-Regular.ttf",
+          "./assets/fonts/Caveat-VariableFont.ttf",
+          "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+          "./assets/fonts/Nunito-VariableFont_wght.ttf"
+        ],
+        "android": {
+          "fonts": [
+            {
+              "fontFamily": "Jua",
+              "fontDefinitions": [
+                {
+                  "path": "./assets/fonts/Jua-Regular.ttf",
+                  "weight": "400"
+                }
+              ]
+            },
+            {
+              "fontFamily": "Caveat",
+              "fontDefinitions": [
+                {
+                  "path": "./assets/fonts/Caveat-VariableFont.ttf",
+                  "weight": "400"
+                }
+              ]
+            },
+            {
+              "fontFamily": "Merriweather",
+              "fontDefinitions": [
+                {
+                  "path": "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+                  "weight": "400"
+                }
+              ]
+            },
+            {
+              "fontFamily": "Nunito",
+              "fontDefinitions": [
+                {
+                  "path": "./assets/fonts/Nunito-VariableFont_wght.ttf",
+                  "weight": "400"
+                }
+              ]
+            }
+          ]
+        },
+        "ios": {
+          "fonts": [
+            "./assets/fonts/Jua-Regular.ttf",
+            "./assets/fonts/Caveat-VariableFont.ttf",
+            "./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf",
+            "./assets/fonts/Nunito-VariableFont_wght.ttf"
+          ]
+        }
+        }
+      ]
     ]
   }
 }

@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ label }) => {
 const styles = StyleSheet.create({
   wrapper: {
     width: '95%',
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 8,
     backgroundColor: '#fff',
     borderRadius: 5,
