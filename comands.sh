@@ -12,3 +12,8 @@ npx expo start
 
 ## Buildar apk
 npx expo run:android
+
+
+### #554b46
+### #ddd0c2
+### #241913
