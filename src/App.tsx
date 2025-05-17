@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
+import * as SQLite from 'expo-sqlite';
+import { initializeDatabse } from '../db/initializeDatabase';
 import { Home } from './screen/home';
 import Notas from './screen/notas';
 import Tarefas from './screen/tarefas';
@@ -44,14 +46,16 @@ export default function App() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}>
-        {currentScreen !== 'config' && (
-          <SearchBar label={pageLabels[currentScreen]} />
-        )}
-        {PageComponent}
-        <Footer current={currentScreen} onNavigate={screen => setCurrentScreen(screen as PageKey)} />
-      </SafeAreaView>
+      <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
+        <StatusBar barStyle="dark-content" />
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}>
+          {currentScreen !== 'config' && (
+            <SearchBar label={pageLabels[currentScreen]} />
+          )}
+          {PageComponent}
+          <Footer current={currentScreen} onNavigate={screen => setCurrentScreen(screen as PageKey)} />
+        </SafeAreaView>
+      </SQLite.SQLiteProvider>
     </>
   );
 }
