@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, StatusBar, Image } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Note, NoteService } from '../../db/services/noteService';
 import { addImageColumn } from '../../db/migrations/addImageColumn';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import NoteDetailModal from '../../components/NoteDetailModal';
+import NoteFormModal from '../../components/NoteFormModal';
 
 const Notes: React.FC = () => {
   const db = useSQLiteContext();
@@ -12,10 +14,9 @@ const Notes: React.FC = () => {
   
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [titulo, setTitulo] = useState('');
-  const [conteudo, setConteudo] = useState('');
-  const [imagem, setImagem] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,12 +49,7 @@ const Notes: React.FC = () => {
     }
   };
 
-  const handleAddNote = async () => {
-    if (!titulo.trim()) {
-      alert("O título é obrigatório!");
-      return;
-    }
-
+  const handleAddNote = async (titulo: string, conteudo: string, imagem: string | null) => {
     try {
       if (selectedNote?.id) {
         // Se há um ID, estamos editando uma nota existente
@@ -73,13 +69,8 @@ const Notes: React.FC = () => {
         });
       }
       
-      // Resetar estados
-      setTitulo('');
-      setConteudo('');
-      setImagem(null);
+      // Fechar modal e recarregar notas
       setModalVisible(false);
-      
-      // Recarregar notas
       loadNotes();
     } catch (error) {
       console.error('Erro ao salvar nota:', error);
@@ -99,23 +90,20 @@ const Notes: React.FC = () => {
   const handleDeleteNote = async (id: number) => {
     try {
       await noteService.deleteNote(id);
+      setDeleteConfirmModalVisible(false);
+      setNoteToDelete(null);
+      if (detailModalVisible) {
+        setDetailModalVisible(false);
+      }
       loadNotes();
     } catch (error) {
       console.error('Erro ao excluir nota:', error);
     }
   };
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImagem(result.assets[0].uri);
-    }
+  const confirmDelete = (id: number) => {
+    setNoteToDelete(id);
+    setDeleteConfirmModalVisible(true);
   };
 
   const handleViewNoteDetails = (note: Note) => {
@@ -143,6 +131,32 @@ const Notes: React.FC = () => {
               <TouchableOpacity 
                 onPress={(e) => {
                   e.stopPropagation();
+                  handleEditNote(item);
+                }}
+              >
+                <MaterialIcons 
+                  name="edit" 
+                  size={24} 
+                  color="#FFD700"
+                  style={styles.actionIcon}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  confirmDelete(item.id as number);
+                }}
+              >
+                <MaterialIcons 
+                  name="delete-outline" 
+                  size={24} 
+                  color="#FF6B6B"
+                  style={styles.actionIcon}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e) => {
+                  e.stopPropagation();
                   handleFavoriteToggle(item.id as number);
                 }}
               >
@@ -150,19 +164,6 @@ const Notes: React.FC = () => {
                   name={item.isFavorite ? "star" : "star-outline"} 
                   size={24} 
                   color={item.isFavorite ? "#FFD700" : "#888"}
-                  style={styles.actionIcon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleDeleteNote(item.id as number);
-                }}
-              >
-                <MaterialIcons 
-                  name="delete-outline" 
-                  size={24} 
-                  color="#FF6B6B"
                   style={styles.actionIcon}
                 />
               </TouchableOpacity>
@@ -183,18 +184,27 @@ const Notes: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const handleEditNote = () => {
-    if (selectedNote) {
-      setTitulo(selectedNote.titulo);
-      setConteudo(selectedNote.conteudo || '');
-      setImagem(selectedNote.imagem || null);
+  const handleEditNote = (note?: Note) => {
+    const noteToEdit = note || selectedNote;
+    if (noteToEdit) {
+      setSelectedNote(noteToEdit);
       setDetailModalVisible(false);
       setModalVisible(true);
     }
   };
 
+  const handleCreateNote = () => {
+    setSelectedNote(null);
+    setModalVisible(true);
+  };
+
   return (
     <View style={styles.container}>
+      <StatusBar
+        backgroundColor={detailModalVisible || modalVisible || deleteConfirmModalVisible ? 'rgba(0, 0, 0, 0.5)' : '#ddd0c2'}
+        barStyle={detailModalVisible || modalVisible || deleteConfirmModalVisible ? 'light-content' : 'dark-content'}
+      />
+      
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando...</Text>
@@ -217,172 +227,39 @@ const Notes: React.FC = () => {
       {/* Botão flutuante para adicionar nova nota */}
       <TouchableOpacity 
         style={styles.addButton}
-        onPress={() => setModalVisible(true)}
+        onPress={handleCreateNote}
       >
         <AntDesign name="plus" size={24} color="#fff" />
       </TouchableOpacity>
 
       {/* Modal para ver detalhes da nota */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <NoteDetailModal
         visible={detailModalVisible}
-        onRequestClose={() => setDetailModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text 
-                style={styles.modalTitle}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {selectedNote?.titulo}
-              </Text>
-              <View style={styles.headerActions}>
-                <TouchableOpacity 
-                  style={styles.headerActionButton}
-                  onPress={handleEditNote}
-                >
-                  <MaterialIcons name="edit" size={24} color="#FFD700" />
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.headerActionButton}
-                  onPress={() => {
-                    if (selectedNote?.id) {
-                      handleDeleteNote(selectedNote.id);
-                      setDetailModalVisible(false);
-                    }
-                  }}
-                >
-                  <MaterialIcons name="delete" size={24} color="#FF6B6B" />
-                </TouchableOpacity>
+        note={selectedNote}
+        onClose={() => setDetailModalVisible(false)}
+        onEdit={() => handleEditNote()}
+        onDelete={(id) => confirmDelete(id)}
+      />
 
-                <TouchableOpacity 
-                  style={styles.headerActionButton}
-                  onPress={() => setDetailModalVisible(false)}
-                >
-                  <Feather name="x" size={24} color="#554b46" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <ScrollView style={styles.formContainer}>
-              {selectedNote?.imagem ? (
-                <Image 
-                  source={{ uri: selectedNote.imagem }} 
-                  style={styles.detailImage} 
-                  resizeMode="contain"
-                />
-              ) : null}
-              
-              {selectedNote?.conteudo ? (
-                <Text style={styles.detailContent}>{selectedNote.conteudo}</Text>
-              ) : (
-                <Text style={styles.noContentText}>Essa nota não possui conteúdo.</Text>
-              )}
-              
-              <View style={styles.detailDates}>
-                <Text style={styles.detailDate}>
-                  Criado em: {selectedNote?.createdAt 
-                    ? new Date(selectedNote.createdAt).toLocaleString('pt-BR') 
-                    : ''}
-                </Text>
-                
-                {selectedNote?.updatedAt && selectedNote.updatedAt !== selectedNote.createdAt ? (
-                  <Text style={styles.detailDate}>
-                    Atualizado em: {new Date(selectedNote.updatedAt).toLocaleString('pt-BR')}
-                  </Text>
-                ) : null}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal para criar nova nota */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      {/* Modal para criar/editar nota */}
+      <NoteFormModal
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(false);
-          setSelectedNote(null);
-          setTitulo('');
-          setConteudo('');
-          setImagem(null);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {selectedNote?.id ? 'Editar Nota' : 'Nova Nota'}
-              </Text>
-              <TouchableOpacity onPress={() => {
-                setModalVisible(false);
-                setSelectedNote(null);
-                setTitulo('');
-                setConteudo('');
-                setImagem(null);
-              }}>
-                <Feather name="x" size={24} color="#554b46" />
-              </TouchableOpacity>
-            </View>
+        note={selectedNote}
+        onClose={() => setModalVisible(false)}
+        onSave={handleAddNote}
+      />
 
-            <ScrollView style={styles.formContainer}>
-              <Text style={styles.label}>Título</Text>
-              <TextInput
-                style={styles.input}
-                value={titulo}
-                onChangeText={setTitulo}
-                placeholder="Digite o título da nota"
-              />
-
-              <Text style={styles.label}>Conteúdo</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={conteudo}
-                onChangeText={setConteudo}
-                placeholder="Digite o conteúdo da nota"
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-
-              <Text style={styles.label}>Imagem</Text>
-              <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
-                {imagem ? (
-                  <View style={styles.imageContainer}>
-                    <Image source={{ uri: imagem }} style={styles.previewImage} />
-                    <TouchableOpacity 
-                      style={styles.removeImageButton}
-                      onPress={() => setImagem(null)}
-                    >
-                      <Feather name="x-circle" size={24} color="#FF6B6B" />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={styles.imagePlaceholder}>
-                    <Feather name="image" size={24} color="#aaa" />
-                    <Text style={styles.imagePlaceholderText}>Selecionar imagem</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={handleAddNote}
-              >
-                <Text style={styles.saveButtonText}>
-                  {selectedNote?.id ? 'Atualizar' : 'Salvar Nota'}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      {/* Modal de confirmação para excluir nota */}
+      <ConfirmationModal
+        visible={deleteConfirmModalVisible}
+        title="Excluir nota"
+        message="Tem certeza que deseja excluir esta nota?"
+        submessage="Esta ação não pode ser desfeita."
+        onCancel={() => setDeleteConfirmModalVisible(false)}
+        onConfirm={() => noteToDelete !== null && handleDeleteNote(noteToDelete)}
+        confirmText="Excluir"
+        confirmButtonColor="#FF6B6B"
+      />
     </View>
   );
 };
@@ -460,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   actionIcon: {
-    marginLeft: 12,
+    marginLeft: 10,
   },
   noteContentText: {
     fontSize: 14,
@@ -497,91 +374,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#554b46',
-    flex: 1,
-    marginRight: 10,
-  },
-  formContainer: {
-    marginTop: 10,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: '#554b46',
-    fontWeight: 'bold',
-  },
-  input: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  textArea: {
-    height: 100,
-  },
-  imageSelector: {
-    marginBottom: 20,
-  },
-  previewImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: 120,
-    borderRadius: 5,
-    backgroundColor: '#f8f8f8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderStyle: 'dashed',
-  },
-  imagePlaceholderText: {
-    marginTop: 10,
-    color: '#aaa',
-  },
-  saveButton: {
-    backgroundColor: '#554b46',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -590,58 +382,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     color: '#554b46',
-  },
-  detailImage: {
-    width: '100%',
-    height: 250,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  detailContent: {
-    fontSize: 16,
-    color: '#554b46',
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  noContentText: {
-    fontSize: 16,
-    color: '#888',
-    fontStyle: 'italic',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  detailDates: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  detailDate: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'right',
-    marginTop: 10,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerActionButton: {
-    marginLeft: 15,
-    padding: 5,
-  },
-  imageContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    padding: 5,
-    zIndex: 1,
   },
 });
 
