@@ -85,7 +85,7 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
           </View>
 
           <ScrollView style={styles.formContainer}>
-            <Text style={styles.label}>Título</Text>
+            <Text style={styles.label}>Título*</Text>
             <TextInput
               style={styles.input}
               value={titulo}
@@ -93,36 +93,39 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
               placeholder="Digite o título da nota"
             />
 
-            <Text style={styles.label}>Conteúdo</Text>
+            <Text style={styles.label}>Conteúdo*</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={conteudo}
               onChangeText={setConteudo}
               placeholder="Digite o conteúdo da nota"
               multiline
-              numberOfLines={4}
+              numberOfLines={12}
               textAlignVertical="top"
+              autoCapitalize="sentences"
             />
 
-            <Text style={styles.label}>Imagem</Text>
-            <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
-              {imagem ? (
-                <View style={styles.imageContainer}>
-                  <Image source={{ uri: imagem }} style={styles.previewImage} />
-                  <TouchableOpacity 
-                    style={styles.removeImageButton}
-                    onPress={() => setImagem(null)}
-                  >
-                    <Feather name="x-circle" size={24} color="#FF6B6B" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Feather name="image" size={24} color="#aaa" />
-                  <Text style={styles.imagePlaceholderText}>Selecionar imagem</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={styles.imageSection}>
+              <Text style={styles.imageLabel}>Imagem</Text>
+              <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
+                {imagem ? (
+                  <View style={styles.imageContainer}>
+                    <Image source={{ uri: imagem }} style={styles.previewImage} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={() => setImagem(null)}
+                    >
+                      <Feather name="x-circle" size={24} color="#FF6B6B" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Feather name="image" size={24} color="#aaa" />
+                    <Text style={styles.imagePlaceholderText}>Selecionar imagem</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
             
             <TouchableOpacity 
               style={styles.saveButton}
@@ -151,7 +154,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: '90%',
-    maxHeight: '80%',
+    maxHeight: '90%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -173,6 +176,7 @@ const styles = StyleSheet.create({
     color: '#554b46',
     flex: 1,
     marginRight: 10,
+    fontFamily: 'Nunito',
   },
   formContainer: {
     marginTop: 10,
@@ -182,6 +186,20 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#554b46',
     fontWeight: 'bold',
+    fontFamily: 'Nunito',
+  },
+  imageLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#777',
+    fontWeight: 'bold',
+  },
+  imageSection: {
+    marginTop: 5,
+    marginBottom: 15,
+    padding: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
   input: {
     backgroundColor: '#f8f8f8',
@@ -190,12 +208,20 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#eee',
+    fontFamily: 'Nunito',
   },
   textArea: {
-    height: 100,
+    height: 200,
+    paddingTop: 12,
+    paddingBottom: 12,
+    textAlignVertical: 'top',
+    lineHeight: 22,
+    borderColor: '#ddd',
+    borderWidth: 1.5,
+    marginBottom: 20,
   },
   imageSelector: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   imageContainer: {
     position: 'relative',
@@ -203,13 +229,13 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: '100%',
-    height: 200,
+    height: 150,
     borderRadius: 5,
     marginBottom: 10,
   },
   imagePlaceholder: {
     width: '100%',
-    height: 120,
+    height: 80,
     borderRadius: 5,
     backgroundColor: '#f8f8f8',
     justifyContent: 'center',
@@ -243,6 +269,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Nunito',
   },
 });
 

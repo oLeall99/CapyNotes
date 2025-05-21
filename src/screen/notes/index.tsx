@@ -284,12 +284,14 @@ const styles = StyleSheet.create({
     color: '#554b46',
     marginTop: 16,
     fontWeight: 'bold',
+    fontFamily: 'Nunito',
   },
   emptySubText: {
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
     marginTop: 8,
+    fontFamily: 'Nunito',
   },
   noteCard: {
     backgroundColor: '#fff',
@@ -332,6 +334,7 @@ const styles = StyleSheet.create({
     color: '#554b46',
     flex: 1,
     marginRight: 8,
+    fontFamily: 'Nunito',
   },
   noteActions: {
     flexDirection: 'row',
@@ -345,12 +348,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     lineHeight: 20,
     flexGrow: 1,
+    fontFamily: 'Nunito',
   },
   noteDate: {
     fontSize: 12,
     color: '#888',
     textAlign: 'right',
     marginTop: 'auto',
+    fontFamily: 'Nunito',
   },
   addButton: {
     position: 'absolute',
@@ -382,6 +387,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     color: '#554b46',
+    fontFamily: 'Nunito',
   },
 });
 

@@ -82,11 +82,11 @@ const NoteDetailModal: React.FC<NoteDetailModalProps> = ({
                   : ''}
               </Text>
               
-              {note?.updatedAt && note.updatedAt !== note.createdAt ? (
-                <Text style={styles.detailDate}>
-                  Atualizado em: {new Date(note.updatedAt).toLocaleString('pt-BR')}
-                </Text>
-              ) : null}
+              <Text style={styles.detailDate}>
+                Atualizado em: {note?.updatedAt 
+                  ? new Date(note.updatedAt).toLocaleString('pt-BR') 
+                  : ''}
+              </Text>
             </View>
           </ScrollView>
         </View>
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
     color: '#554b46',
     flex: 1,
     marginRight: 10,
+    fontFamily: 'Nunito',
   },
   headerActions: {
     flexDirection: 'row',
@@ -152,6 +153,7 @@ const styles = StyleSheet.create({
     color: '#554b46',
     lineHeight: 24,
     marginBottom: 20,
+    fontFamily: 'Nunito',
   },
   noContentText: {
     fontSize: 16,
@@ -159,18 +161,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'Nunito',
   },
   detailDates: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
     marginBottom: 20,
   },
   detailDate: {
     fontSize: 14,
     color: '#888',
     textAlign: 'right',
-    marginTop: 10,
+    marginTop: 5,
+    fontFamily: 'Nunito',
   },
 });
 
