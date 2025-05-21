@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const Metas: React.FC = () => {
+const Notes: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Aqui ficam suas metas.</Text>
+      <Text style={styles.text}>Aqui ficam suas notas.</Text>
     </View>
   );
 };
@@ -22,4 +22,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Metas; 
+export default Notes; 

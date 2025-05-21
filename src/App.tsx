@@ -3,9 +3,9 @@ import { SafeAreaView, StatusBar, View, Image } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { initializeDatabse } from './db/initializeDatabase';
 import { Home } from './screen/home';
-import Notas from './screen/notas';
-import Tarefas from './screen/tarefas';
-import Metas from './screen/metas';
+import Notes from './screen/notes';
+import Tasks from './screen/tasks';
+import Goals from './screen/goals';
 import Config from './screen/config';
 import SearchBar from './components/search';
 import Footer from './components/footer';
@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 // Previne que a splash screen seja escondida automaticamente
 SplashScreen.preventAutoHideAsync();
+
 
 const pageLabels: Record<PageKey, string> = {
   home: 'Hoje',
@@ -55,13 +56,13 @@ export default function App() {
       PageComponent = <Home />;
       break;
     case 'notas':
-      PageComponent = <Notas />;
+      PageComponent = <Notes />;
       break;
     case 'tarefas':
-      PageComponent = <Tarefas />;
+      PageComponent = <Tasks />;
       break;
     case 'metas':
-      PageComponent = <Metas />;
+      PageComponent = <Goals />;
       break;
     case 'config':
       PageComponent = <Config />;
@@ -75,7 +76,7 @@ export default function App() {
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
         <StatusBar barStyle="dark-content" />
         <SafeAreaView 
-          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 16 }}
           onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
