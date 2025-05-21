@@ -55,11 +55,23 @@ const Notes: React.FC = () => {
     }
 
     try {
-      await noteService.createNote({
-        titulo,
-        conteudo,
-        imagem
-      });
+      if (selectedNote?.id) {
+        // Se há um ID, estamos editando uma nota existente
+        await noteService.updateNote({
+          id: selectedNote.id,
+          titulo,
+          conteudo,
+          imagem
+        });
+        setSelectedNote(null);
+      } else {
+        // Caso contrário, estamos criando uma nova nota
+        await noteService.createNote({
+          titulo,
+          conteudo,
+          imagem
+        });
+      }
       
       // Resetar estados
       setTitulo('');
@@ -117,14 +129,10 @@ const Notes: React.FC = () => {
       onPress={() => handleViewNoteDetails(item)}
       activeOpacity={0.7}
     >
-      <View style={styles.noteContent}>
+      <View style={item.imagem ? styles.noteContent : styles.noteContentNoImage}>
         {item.imagem ? (
           <Image source={{ uri: item.imagem }} style={styles.noteImage} />
-        ) : (
-          <View style={styles.noImagePlaceholder}>
-            <Feather name="file-text" size={24} color="#ddd" />
-          </View>
-        )}
+        ) : null}
         
         <View style={styles.noteTextContent}>
           <View style={styles.noteHeader}>
@@ -175,6 +183,16 @@ const Notes: React.FC = () => {
     </TouchableOpacity>
   );
 
+  const handleEditNote = () => {
+    if (selectedNote) {
+      setTitulo(selectedNote.titulo);
+      setConteudo(selectedNote.conteudo || '');
+      setImagem(selectedNote.imagem || null);
+      setDetailModalVisible(false);
+      setModalVisible(true);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {isLoading ? (
@@ -214,10 +232,40 @@ const Notes: React.FC = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedNote?.titulo}</Text>
-              <TouchableOpacity onPress={() => setDetailModalVisible(false)}>
-                <Feather name="x" size={24} color="#554b46" />
-              </TouchableOpacity>
+              <Text 
+                style={styles.modalTitle}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {selectedNote?.titulo}
+              </Text>
+              <View style={styles.headerActions}>
+                <TouchableOpacity 
+                  style={styles.headerActionButton}
+                  onPress={handleEditNote}
+                >
+                  <MaterialIcons name="edit" size={24} color="#FFD700" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.headerActionButton}
+                  onPress={() => {
+                    if (selectedNote?.id) {
+                      handleDeleteNote(selectedNote.id);
+                      setDetailModalVisible(false);
+                    }
+                  }}
+                >
+                  <MaterialIcons name="delete" size={24} color="#FF6B6B" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.headerActionButton}
+                  onPress={() => setDetailModalVisible(false)}
+                >
+                  <Feather name="x" size={24} color="#554b46" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <ScrollView style={styles.formContainer}>
@@ -235,11 +283,19 @@ const Notes: React.FC = () => {
                 <Text style={styles.noContentText}>Essa nota não possui conteúdo.</Text>
               )}
               
-              <Text style={styles.detailDate}>
-                Criado em: {selectedNote?.createdAt 
-                  ? new Date(selectedNote.createdAt).toLocaleString('pt-BR') 
-                  : ''}
-              </Text>
+              <View style={styles.detailDates}>
+                <Text style={styles.detailDate}>
+                  Criado em: {selectedNote?.createdAt 
+                    ? new Date(selectedNote.createdAt).toLocaleString('pt-BR') 
+                    : ''}
+                </Text>
+                
+                {selectedNote?.updatedAt && selectedNote.updatedAt !== selectedNote.createdAt ? (
+                  <Text style={styles.detailDate}>
+                    Atualizado em: {new Date(selectedNote.updatedAt).toLocaleString('pt-BR')}
+                  </Text>
+                ) : null}
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -250,13 +306,27 @@ const Notes: React.FC = () => {
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {
+          setModalVisible(false);
+          setSelectedNote(null);
+          setTitulo('');
+          setConteudo('');
+          setImagem(null);
+        }}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nova Nota</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalTitle}>
+                {selectedNote?.id ? 'Editar Nota' : 'Nova Nota'}
+              </Text>
+              <TouchableOpacity onPress={() => {
+                setModalVisible(false);
+                setSelectedNote(null);
+                setTitulo('');
+                setConteudo('');
+                setImagem(null);
+              }}>
                 <Feather name="x" size={24} color="#554b46" />
               </TouchableOpacity>
             </View>
@@ -284,7 +354,15 @@ const Notes: React.FC = () => {
               <Text style={styles.label}>Imagem</Text>
               <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
                 {imagem ? (
-                  <Image source={{ uri: imagem }} style={styles.previewImage} />
+                  <View style={styles.imageContainer}>
+                    <Image source={{ uri: imagem }} style={styles.previewImage} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={() => setImagem(null)}
+                    >
+                      <Feather name="x-circle" size={24} color="#FF6B6B" />
+                    </TouchableOpacity>
+                  </View>
                 ) : (
                   <View style={styles.imagePlaceholder}>
                     <Feather name="image" size={24} color="#aaa" />
@@ -297,7 +375,9 @@ const Notes: React.FC = () => {
                 style={styles.saveButton}
                 onPress={handleAddNote}
               >
-                <Text style={styles.saveButtonText}>Salvar Nota</Text>
+                <Text style={styles.saveButtonText}>
+                  {selectedNote?.id ? 'Atualizar' : 'Salvar Nota'}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -349,22 +429,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
+  noteContentNoImage: {
+    flexDirection: 'column',
+  },
   noteImage: {
     width: 100,
     height: 100,
     borderRadius: 6,
-    marginRight: 16,
-  },
-  noImagePlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 6,
-    backgroundColor: '#f8f8f8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderStyle: 'dashed',
     marginRight: 16,
   },
   noteTextContent: {
@@ -451,6 +522,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#554b46',
+    flex: 1,
+    marginRight: 10,
   },
   formContainer: {
     marginTop: 10,
@@ -537,11 +610,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  detailDates: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   detailDate: {
     fontSize: 14,
     color: '#888',
     textAlign: 'right',
     marginTop: 10,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActionButton: {
+    marginLeft: 15,
+    padding: 5,
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 20,
+    padding: 5,
+    zIndex: 1,
   },
 });
 
