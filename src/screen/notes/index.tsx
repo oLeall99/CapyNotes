@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, StatusBar, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Note, NoteService } from '../../db/services/noteService';
@@ -7,6 +7,7 @@ import { addImageColumn } from '../../db/migrations/addImageColumn';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import NoteDetailModal from '../../components/NoteDetailModal';
 import NoteFormModal from '../../components/NoteFormModal';
+import SearchBar from '../../components/search';
 
 const Notes: React.FC = () => {
   const db = useSQLiteContext();
@@ -19,6 +20,7 @@ const Notes: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const initialize = async () => {
@@ -46,6 +48,23 @@ const Notes: React.FC = () => {
       setNotes(loadedNotes);
     } catch (error) {
       console.error('Erro ao carregar notas:', error);
+    }
+  };
+
+  const handleSearch = async (term: string) => {
+    setSearchTerm(term);
+    try {
+      setIsLoading(true);
+      if (term.trim() === '') {
+        await loadNotes();
+      } else {
+        const searchResults = await noteService.searchNotesByTitle(term);
+        setNotes(searchResults);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar notas:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -200,10 +219,9 @@ const Notes: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        backgroundColor={detailModalVisible || modalVisible || deleteConfirmModalVisible ? 'rgba(0, 0, 0, 0.5)' : '#ddd0c2'}
-        barStyle={detailModalVisible || modalVisible || deleteConfirmModalVisible ? 'light-content' : 'dark-content'}
-      />
+      <View style={styles.searchContainer}>
+        <SearchBar label="Buscar notas..." onSearch={handleSearch} />
+      </View>
       
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -219,8 +237,14 @@ const Notes: React.FC = () => {
       ) : (
         <View style={styles.emptyContainer}>
           <Feather name="book-open" size={50} color="#aaa" />
-          <Text style={styles.emptyText}>Não há notas disponíveis</Text>
-          <Text style={styles.emptySubText}>Toque no botão + para adicionar sua primeira nota</Text>
+          <Text style={styles.emptyText}>
+            {searchTerm ? 'Nenhuma nota encontrada' : 'Não há notas disponíveis'}
+          </Text>
+          <Text style={styles.emptySubText}>
+            {searchTerm 
+              ? 'Tente buscar com outros termos' 
+              : 'Toque no botão + para adicionar sua primeira nota'}
+          </Text>
         </View>
       )}
       
@@ -388,6 +412,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#554b46',
     fontFamily: 'Nunito',
+  },
+  searchContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
 });
 

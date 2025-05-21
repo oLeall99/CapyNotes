@@ -23,7 +23,7 @@ const NoteDetailModal: React.FC<NoteDetailModalProps> = ({
       animationType="slide"
       transparent={true}
       visible={visible}
-      statusBarTranslucent={true}
+      statusBarTranslucent={false}
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>

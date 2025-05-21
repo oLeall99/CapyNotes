@@ -29,6 +29,7 @@ type PageKey = 'home' | 'notas' | 'tarefas' | 'metas' | 'config';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<PageKey>('home');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Carrega todas as fontes necessárias para o app
   const [fontsLoaded] = useFonts({
@@ -49,6 +50,10 @@ export default function App() {
   if (!fontsLoaded) {
     return null;
   }
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
 
   let PageComponent = null;
   switch (currentScreen) {
@@ -74,14 +79,18 @@ export default function App() {
   return (
     <>
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar 
+          backgroundColor="#ddd0c2"
+          translucent={true}
+          barStyle="dark-content"
+        />
         <SafeAreaView 
-          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 8 }}
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 0 }}
           onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
             paddingHorizontal: 20, 
-            marginTop: 10, 
+            marginTop: 40, 
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center'
@@ -97,7 +106,9 @@ export default function App() {
             />
           </View>
           {currentScreen !== 'config' && (
-            <SearchBar label={pageLabels[currentScreen]} />
+            <View style={{ width: '100%' }}>
+              {/* Componente SearchBar não necessário aqui pois agora é renderizado diretamente dentro da tela Notes */}
+            </View>
           )}
           {PageComponent}
           <Footer current={currentScreen} onNavigate={screen => setCurrentScreen(screen as PageKey)} />

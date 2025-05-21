@@ -113,4 +113,21 @@ export class NoteService {
       throw error;
     }
   }
+
+  // Buscar notas por título
+  async searchNotesByTitle(searchTerm: string): Promise<Note[]> {
+    try {
+      const result = await this.db.getAllAsync<Note>(
+        `SELECT * FROM notes 
+         WHERE titulo LIKE ? 
+         ORDER BY updatedAt DESC`,
+        [`%${searchTerm}%`]
+      );
+      
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar notas:', error);
+      throw error;
+    }
+  }
 } 

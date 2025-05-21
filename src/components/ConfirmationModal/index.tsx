@@ -29,7 +29,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       animationType="fade"
       transparent={true}
       visible={visible}
-      statusBarTranslucent={true}
+      statusBarTranslucent={false}
       onRequestClose={onCancel}
     >
       <View style={styles.modalContainer}>

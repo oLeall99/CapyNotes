@@ -70,7 +70,7 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
       animationType="slide"
       transparent={true}
       visible={visible}
-      statusBarTranslucent={true}
+      statusBarTranslucent={false}
       onRequestClose={handleClose}
     >
       <View style={styles.modalContainer}>
