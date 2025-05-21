@@ -1,7 +1,16 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
-import SearchBar  from '../../components/search';
-import Footer from '../../components/footer';
+import { StyleSheet, Text, View } from "react-native";
+
+export function Home() {
+    return (
+        <>
+            <View style={styles.header}>
+                <Text style={styles.title}>CapyNaotes</Text>
+            </View> 
+        </>
+    )
+}
+
 
 const styles = StyleSheet.create({
     container: {
@@ -19,16 +28,3 @@ const styles = StyleSheet.create({
         color: "#554b46",
     },
 });
-
-export function Home() {
-    return (
-        <>
-            <StatusBar barStyle="dark-content" />
-            <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.title}>CapyNaotes</Text>
-                </View> 
-            </SafeAreaView>
-        </>
-    )
-}
