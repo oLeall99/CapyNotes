@@ -76,7 +76,7 @@ export default function App() {
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
         <StatusBar barStyle="dark-content" />
         <SafeAreaView 
-          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 16 }}
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 8 }}
           onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
