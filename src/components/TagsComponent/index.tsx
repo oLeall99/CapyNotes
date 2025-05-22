@@ -37,7 +37,10 @@ const TagsComponent: React.FC<TagsComponentProps> = ({ title = 'Gerenciar Tags' 
     '#80CFFF', // Azul
     '#D5B2FF', // Roxo
     '#FF9EC4', // Rosa
+    '#FF00FF', // Magenta
     '#808080', // Cinza
+    '#000000', // Preto
+    '#FFFFFF', // Branco
   ];
   
   useEffect(() => {

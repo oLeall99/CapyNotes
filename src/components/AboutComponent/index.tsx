@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Linking, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
+import LogoHeader from '../Logo/LogoHeader';
 
 interface AboutComponentProps {
   title?: string;
@@ -21,17 +22,16 @@ const AboutComponent: React.FC<AboutComponentProps> = ({ title = 'Sobre o Aplica
       <ScrollView style={styles.content}>
         <View style={styles.appInfoSection}>
           <View style={styles.logoContainer}>
-            <Feather name="book-open" size={60} color="#554b46" style={styles.logo} />
+            <Image source={require('../../assets/capynotes-icon.png')} style={styles.logo} />
+            <LogoHeader/>
+            <Text style={styles.appVersion}>Versão 1.0.0</Text>
           </View>
-          
-          <Text style={styles.appName}>App Note</Text>
-          <Text style={styles.appVersion}>Versão 1.0.0</Text>
           
           <View style={styles.divider} />
           
           <Text style={styles.sectionTitle}>Descrição</Text>
           <Text style={styles.description}>
-            App Note é um aplicativo de organização pessoal que permite gerenciar notas, tarefas e metas em um único lugar.
+            Capy Notes é um aplicativo de organização pessoal que permite gerenciar notas, tarefas e metas em um único lugar.
             Organize suas ideias, acompanhe seus objetivos e mantenha-se produtivo com uma interface simples e intuitiva.
           </Text>
           
@@ -76,7 +76,7 @@ const AboutComponent: React.FC<AboutComponentProps> = ({ title = 'Sobre o Aplica
           <Text style={styles.sectionTitle}>Contato</Text>
           <TouchableOpacity 
             style={styles.contactItem}
-            onPress={() => handleLinkPress('https://github.com/username/app-note')}
+            onPress={() => handleLinkPress('https://github.com/oLeall99/notes-app')}
           >
             <Feather name="github" size={24} color="#554b46" style={styles.contactIcon} />
             <Text style={styles.contactText}>GitHub</Text>
@@ -84,15 +84,19 @@ const AboutComponent: React.FC<AboutComponentProps> = ({ title = 'Sobre o Aplica
           
           <TouchableOpacity 
             style={styles.contactItem}
-            onPress={() => handleLinkPress('mailto:contato@appnote.com')}
+            onPress={() => handleLinkPress('mailto:art5mussio@outlook.com')}
           >
             <MaterialIcons name="email" size={24} color="#554b46" style={styles.contactIcon} />
-            <Text style={styles.contactText}>contato@appnote.com</Text>
+            <Text style={styles.contactText}>art5mussio@outlook.com</Text>
           </TouchableOpacity>
           
           <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Desenvolvido por</Text>
+            <Text style={styles.description}>Artur Leal Mussio</Text>
+          <View style={styles.divider} />
           
-          <Text style={styles.copyright}>© 2023 App Note. Todos os direitos reservados.</Text>
+          <Text style={styles.copyright}>© 2025 Capy Notes. Todos os direitos reservados.</Text>
         </View>
       </ScrollView>
     </View>
@@ -132,12 +136,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logoContainer: {
+    display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   logo: {
     width: 80,
     height: 80,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   appName: {
     fontSize: 24,
