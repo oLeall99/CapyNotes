@@ -15,17 +15,9 @@ CapyNote é uma aplicação mobile que oferece uma interface simples e intuitiva
 
 - **React Native**: Framework para desenvolvimento mobile
 - **Expo**: Plataforma para facilitar o desenvolvimento React Native
-- **SQLite**: Banco de dados local para armazenamento de dados
+- **SQLite**: Banco de dados relacional local para armazenamento persistente de notas, tarefas e metas
+- **AsyncStorage**: Sistema de armazenamento de chave-valor para dados simples como histórico de pesquisa
 - **Custom Fonts**: Tipografia personalizada para melhor experiência visual
-
-## Estrutura do Projeto
-
-O aplicativo é organizado em várias telas principais:
-- Tela inicial com lista de favoritos
-- Seção de Notas
-- Seção de Tarefas
-- Seção de Metas
-- Configurações 
 
 ## Como Executar
 
@@ -43,12 +35,116 @@ O aplicativo é organizado em várias telas principais:
    npx expo start
    ```
 
+## Estrutura do Projeto
+
+A arquitetura do projeto segue um padrão organizado para facilitar manutenção e escalabilidade:
+
+```
+src/
+  ├── assets/           # Recursos estáticos (imagens, fontes)
+  ├── components/       # Componentes reutilizáveis da UI
+  │   ├── Footer/       # Navegação principal do app
+  │   ├── Logo/         # Componentes de identidade visual
+  │   ├── search/       # Barra de busca com histórico
+  │   ├── TagSelector/  # Seleção de tags para filtro
+  │   ├── NoteFormModal/# Formulário de criação/edição de notas
+  │   ├── TaskFormModal/# Formulário de criação/edição de tarefas
+  │   ├── GoalFormModal/# Formulário de criação/edição de metas
+  │   └── ...          
+  ├── db/               # Camada de acesso a dados
+  │   ├── scripts/      # Scripts SQL para inicialização do banco
+  │   └── services/     # Serviços para manipulação das entidades
+  │       ├── noteService.ts    # Operações CRUD para notas
+  │       ├── taskService.ts    # Operações CRUD para tarefas  
+  │       ├── goalService.ts    # Operações CRUD para metas
+  │       └── tagService.ts     # Operações CRUD para tags
+  ├── screen/           # Telas principais do aplicativo
+  │   ├── home/         # Tela inicial com favoritos
+  │   ├── notes/        # Gerenciamento de notas
+  │   ├── tasks/        # Gerenciamento de tarefas
+  │   ├── goals/        # Gerenciamento de metas
+  │   └── config/       # Configurações do aplicativo
+  └── App.tsx           # Componente principal e configuração de rotas
+```
+
+A estrutura do projeto foi desenvolvida seguindo princípios de:
+
+- **Separação de Responsabilidades**: Cada componente tem uma função específica
+- **Reutilização de Código**: Componentes modulares que podem ser usados em diferentes contextos
+- **Organização de Dados**: Separação clara entre UI e lógica de negócios
+
+## Modelo de Dados
+
+O aplicativo utiliza um banco de dados SQLite com as seguintes entidades principais:
+
+### Notas (Notes)
+```
+- id: INTEGER (chave primária)
+- titulo: TEXT (título da nota)
+- conteudo: TEXT (conteúdo da nota)
+- imagem: TEXT (caminho para imagem opcional)
+- isFavorite: INTEGER (marcação de favorito)
+- createdAt: DATETIME (data de criação)
+- updatedAt: DATETIME (data de atualização)
+```
+
+### Tarefas (Tasks)
+```
+- id: INTEGER (chave primária)
+- titulo: TEXT (título da tarefa)
+- descricao: TEXT (descrição detalhada)
+- status: TEXT ('TO_DO', 'IN_PROGRESS', 'DONE')
+- isFavorite: INTEGER (marcação de favorito)
+- taskGroupId: INTEGER (grupo de tarefas, opcional)
+- createdAt: DATETIME (data de criação)
+- updatedAt: DATETIME (data de atualização)
+```
+
+### Metas (Goals)
+```
+- id: INTEGER (chave primária)
+- titulo: TEXT (título da meta)
+- descricao: TEXT (descrição detalhada)
+- valorInicial: REAL (valor inicial da meta)
+- valorAtual: REAL (progresso atual)
+- valorFinal: REAL (valor objetivo da meta)
+- tipo: TEXT ('inteiro', 'dinheiro')
+- isFavorite: INTEGER (marcação de favorito)
+- createdAt: DATETIME (data de criação)
+- updatedAt: DATETIME (data de atualização)
+```
+
+### Tags
+```
+- id: INTEGER (chave primária)
+- titulo: TEXT (nome da tag)
+- color: TEXT (código de cor da tag)
+- descricao: TEXT (descrição opcional)
+```
+
+### Relacionamentos
+
+O sistema implementa relacionamentos muitos-para-muitos entre as entidades principais e as tags através de tabelas de junção:
+
+- **note_tags**: Relaciona notas com tags
+- **task_tags**: Relaciona tarefas com tags
+- **goal_tags**: Relaciona metas com tags
+
+Esta estrutura permite uma organização flexível e categorização eficiente de todos os itens no aplicativo.
+
 ## Funcionalidades Principais
 
 - Criação e edição de notas, tarefas e metas
 - Navegação intuitiva entre diferentes seções do app
-- Sistema de busca para encontrar rapidamente o conteúdo desejado
-- Armazenamento local de dados utilizando SQLite
+- Sistema de busca avançado com histórico de pesquisas recentes
+- Armazenamento estruturado de dados:
+  - **SQLite**: Para dados principais (notas, tarefas, metas e tags)
+  - **AsyncStorage**: Para histórico de busca
+- Organização com sistema de tags coloridas
+- Marcação de itens como favoritos
+- Acompanhamento de progresso em metas
+- Gerenciamento de status de tarefas (A fazer, Em progresso, Concluído)
+- Interface limpa e intuitiva para melhor experiência do usuário
 
 ## Contribuidores
 
