@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const Tarefas: React.FC = () => {
+const Tasks: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Aqui ficam suas tarefas.</Text>
@@ -22,4 +22,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Tarefas; 
+export default Tasks; 
