@@ -8,6 +8,7 @@ import GoalDetailModal from '../../components/GoalDetailModal';
 import GoalFormModal from '../../components/GoalFormModal';
 import GoalCard from '../../components/GoalCard';
 import SearchBar from '../../components/search';
+import { Tag } from '../../db/services/tagService';
 
 interface GoalSection {
   title: string;
@@ -110,7 +111,8 @@ const Goals: React.FC = () => {
     valorInicial: number, 
     valorAtual: number, 
     valorFinal: number, 
-    tipo: 'inteiro' | 'dinheiro'
+    tipo: 'inteiro' | 'dinheiro',
+    tags: Tag[]
   ) => {
     try {
       if (selectedGoal?.id) {
@@ -122,7 +124,8 @@ const Goals: React.FC = () => {
           valorInicial,
           valorAtual,
           valorFinal,
-          tipo
+          tipo,
+          tags
         });
         setSelectedGoal(null);
       } else {
@@ -133,7 +136,8 @@ const Goals: React.FC = () => {
           valorInicial,
           valorAtual,
           valorFinal,
-          tipo
+          tipo,
+          tags
         });
       }
       

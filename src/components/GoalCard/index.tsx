@@ -123,6 +123,26 @@ const GoalCard: React.FC<GoalCardProps> = ({
         </Text>
       </View>
 
+      {goal.tags && goal.tags.length > 0 && (
+        <View style={styles.tagsRow}>
+          <View style={styles.tagsContainer}>
+            {goal.tags.slice(0, 2).map(tag => (
+              <View 
+                key={tag.id} 
+                style={[styles.tagBadge, { backgroundColor: tag.color || '#808080' }]}
+              >
+                <Text style={styles.tagText} numberOfLines={1}>{tag.titulo}</Text>
+              </View>
+            ))}
+            {goal.tags.length > 2 && (
+              <View style={styles.moreTagsBadge}>
+                <Text style={styles.moreTagsText}>+{goal.tags.length - 2}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
       <View style={styles.goalFooter}>
         <Text style={[
           styles.goalCurrentValue,
@@ -217,6 +237,37 @@ const styles = StyleSheet.create({
   },
   completedProgressText: {
     color: '#FFD700',
+  },
+  tagsRow: {
+    marginBottom: 12,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+  },
+  tagBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 4,
+    maxWidth: 80,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontFamily: 'Nunito',
+  },
+  moreTagsBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#aaa',
+  },
+  moreTagsText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'Nunito',
   },
   goalFooter: {
     flexDirection: 'row',

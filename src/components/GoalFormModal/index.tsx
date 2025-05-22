@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { Goal } from '../../db/services/goalService';
+import { Tag, TagService } from '../../db/services/tagService';
+import { useSQLiteContext } from 'expo-sqlite';
 
 interface GoalFormModalProps {
   visible: boolean;
   goal: Goal | null;
   onClose: () => void;
-  onSave: (titulo: string, descricao: string, valorInicial: number, valorAtual: number, valorFinal: number, tipo: 'inteiro' | 'dinheiro') => void;
+  onSave: (titulo: string, descricao: string, valorInicial: number, valorAtual: number, valorFinal: number, tipo: 'inteiro' | 'dinheiro', tags: Tag[]) => void;
 }
 
 const GoalFormModal: React.FC<GoalFormModalProps> = ({
@@ -26,12 +28,24 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
   onClose,
   onSave
 }) => {
+  const db = useSQLiteContext();
+  const tagService = new TagService(db);
+  
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [valorInicial, setValorInicial] = useState('0');
   const [valorAtual, setValorAtual] = useState('0');
   const [valorFinal, setValorFinal] = useState('0');
   const [tipo, setTipo] = useState<'inteiro' | 'dinheiro'>('inteiro');
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [isTagsLoading, setIsTagsLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      loadTags();
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (goal) {
@@ -41,6 +55,7 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
       setValorAtual(goal.valorAtual.toString());
       setValorFinal(goal.valorFinal.toString());
       setTipo(goal.tipo);
+      setSelectedTags(goal.tags || []);
     } else {
       // Valores padrão para nova meta
       setTitulo('');
@@ -49,8 +64,21 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
       setValorAtual('0');
       setValorFinal('100');
       setTipo('inteiro');
+      setSelectedTags([]);
     }
   }, [goal, visible]);
+
+  const loadTags = async () => {
+    try {
+      setIsTagsLoading(true);
+      const tags = await tagService.getAllTags();
+      setAvailableTags(tags);
+    } catch (error) {
+      console.error('Erro ao carregar tags:', error);
+    } finally {
+      setIsTagsLoading(false);
+    }
+  };
 
   const handleSave = () => {
     // Validação básica
@@ -84,7 +112,8 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
       vInicial, 
       vAtual, 
       vFinal, 
-      tipo
+      tipo,
+      selectedTags
     );
     
     // Limpar formulário
@@ -94,6 +123,7 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
     setValorAtual('0');
     setValorFinal('100');
     setTipo('inteiro');
+    setSelectedTags([]);
   };
 
   const formatarValorInput = (valor: string, inputType: 'inicial' | 'atual' | 'final') => {
@@ -120,6 +150,39 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
         break;
     }
   };
+
+  const toggleTagSelection = (tag: Tag) => {
+    if (isTagSelected(tag)) {
+      // Remove a tag da seleção
+      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+    } else {
+      // Adiciona a tag à seleção
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const isTagSelected = (tag: Tag): boolean => {
+    return selectedTags.some(t => t.id === tag.id);
+  };
+
+  const renderTagItem = (tag: Tag) => (
+    <TouchableOpacity
+      key={tag.id}
+      style={[
+        styles.tagItem,
+        { backgroundColor: isTagSelected(tag) ? tag.color || '#808080' : 'transparent' },
+        { borderColor: tag.color || '#808080' }
+      ]}
+      onPress={() => toggleTagSelection(tag)}
+    >
+      <Text style={[
+        styles.tagText,
+        { color: isTagSelected(tag) ? '#fff' : tag.color || '#808080' }
+      ]}>
+        {tag.titulo}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <Modal
@@ -165,47 +228,31 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
                 />
               </View>
 
-              <View style={styles.inputRow}>
-                <View style={styles.tipoContainer}>
-                  <Text style={styles.label}>Tipo</Text>
-                  <View style={styles.tipoSelector}>
-                    <TouchableOpacity 
-                      style={[
-                        styles.tipoButton, 
-                        tipo === 'inteiro' && styles.tipoButtonActive
-                      ]}
-                      onPress={() => setTipo('inteiro')}
-                    >
-                      <Text style={tipo === 'inteiro' ? styles.tipoTextActive : styles.tipoText}>
-                        Inteiro
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[
-                        styles.tipoButton, 
-                        tipo === 'dinheiro' && styles.tipoButtonActive
-                      ]}
-                      onPress={() => setTipo('dinheiro')}
-                    >
-                      <Text style={tipo === 'dinheiro' ? styles.tipoTextActive : styles.tipoText}>
-                        Dinheiro
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Valor Inicial</Text>
-                <View style={styles.valorInputContainer}>
-                  {tipo === 'dinheiro' && <Text style={styles.currencySymbol}>R$</Text>}
-                  <TextInput
-                    style={styles.valorInput}
-                    value={valorInicial}
-                    onChangeText={(text) => formatarValorInput(text, 'inicial')}
-                    keyboardType="numeric"
-                    placeholder="0"
-                  />
+                <Text style={styles.label}>Tipo</Text>
+                <View style={styles.tipoSelector}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.tipoButton, 
+                      tipo === 'inteiro' && styles.tipoButtonActive
+                    ]}
+                    onPress={() => setTipo('inteiro')}
+                  >
+                    <Text style={tipo === 'inteiro' ? styles.tipoTextActive : styles.tipoText}>
+                      Inteiro
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[
+                      styles.tipoButton, 
+                      tipo === 'dinheiro' && styles.tipoButtonActive
+                    ]}
+                    onPress={() => setTipo('dinheiro')}
+                  >
+                    <Text style={tipo === 'dinheiro' ? styles.tipoTextActive : styles.tipoText}>
+                      Dinheiro
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -223,18 +270,50 @@ const GoalFormModal: React.FC<GoalFormModalProps> = ({
                 </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Valor Final</Text>
-                <View style={styles.valorInputContainer}>
-                  {tipo === 'dinheiro' && <Text style={styles.currencySymbol}>R$</Text>}
-                  <TextInput
-                    style={styles.valorInput}
-                    value={valorFinal}
-                    onChangeText={(text) => formatarValorInput(text, 'final')}
-                    keyboardType="numeric"
-                    placeholder="100"
-                  />
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroupHalf, {marginRight: 8}]}>
+                  <Text style={styles.label}>Valor Inicial</Text>
+                  <View style={styles.valorInputContainer}>
+                    {tipo === 'dinheiro' && <Text style={styles.currencySymbol}>R$</Text>}
+                    <TextInput
+                      style={styles.valorInput}
+                      value={valorInicial}
+                      onChangeText={(text) => formatarValorInput(text, 'inicial')}
+                      keyboardType="numeric"
+                      placeholder="0"
+                    />
+                  </View>
                 </View>
+                
+                <View style={styles.inputGroupHalf}>
+                  <Text style={styles.label}>Valor Final</Text>
+                  <View style={styles.valorInputContainer}>
+                    {tipo === 'dinheiro' && <Text style={styles.currencySymbol}>R$</Text>}
+                    <TextInput
+                      style={styles.valorInput}
+                      value={valorFinal}
+                      onChangeText={(text) => formatarValorInput(text, 'final')}
+                      keyboardType="numeric"
+                      placeholder="100"
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tags</Text>
+                {isTagsLoading ? (
+                  <Text style={styles.loadingText}>Carregando tags...</Text>
+                ) : availableTags.length > 0 ? (
+                  <View style={styles.tagsContainer}>
+                    {availableTags.map(tag => renderTagItem(tag))}
+                  </View>
+                ) : (
+                  <View style={styles.noTagsContainer}>
+                    <Text style={styles.noTagsText}>Nenhuma tag disponível</Text>
+                    <Text style={styles.noTagsSubText}>Crie tags na tela de configurações</Text>
+                  </View>
+                )}
               </View>
             </ScrollView>
 
@@ -295,12 +374,15 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  inputGroupHalf: {
+    flex: 1,
   },
   label: {
     fontSize: 16,
@@ -368,6 +450,48 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: '#554b46',
+    fontFamily: 'Nunito',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 15,
+  },
+  tagItem: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    margin: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagText: {
+    fontSize: 13,
+    fontFamily: 'Nunito',
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#888',
+    marginVertical: 10,
+    fontFamily: 'Nunito',
+  },
+  noTagsContainer: {
+    alignItems: 'center',
+    marginVertical: 15,
+    padding: 15,
+  },
+  noTagsText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Nunito',
+  },
+  noTagsSubText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 5,
     fontFamily: 'Nunito',
   },
   buttonContainer: {

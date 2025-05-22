@@ -1,4 +1,5 @@
 import { SQLiteDatabase } from "expo-sqlite";
+import { Tag } from "./tagService";
 
 export interface Goal {
   id?: number;
@@ -11,6 +12,7 @@ export interface Goal {
   isFavorite?: number;
   createdAt?: string;
   updatedAt?: string;
+  tags?: Tag[];
 }
 
 export class GoalService {
@@ -19,6 +21,10 @@ export class GoalService {
   // Criar uma nova meta
   async createGoal(goal: Goal): Promise<number> {
     try {
+      // Iniciar transação
+      await this.db.runAsync('BEGIN TRANSACTION');
+      
+      // Inserir meta
       const result = await this.db.runAsync(
         `INSERT INTO goals (titulo, descricao, valorInicial, valorAtual, valorFinal, tipo, isFavorite) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -33,8 +39,27 @@ export class GoalService {
         ]
       );
       
-      return result.lastInsertRowId;
+      const goalId = result.lastInsertRowId;
+      
+      // Adicionar tags à meta, se houver
+      if (goal.tags && goal.tags.length > 0) {
+        for (const tag of goal.tags) {
+          if (tag.id) {
+            await this.db.runAsync(
+              `INSERT INTO goal_tags (goal_id, tag_id) VALUES (?, ?)`,
+              [goalId, tag.id]
+            );
+          }
+        }
+      }
+      
+      // Commit transação
+      await this.db.runAsync('COMMIT');
+      
+      return goalId;
     } catch (error) {
+      // Rollback em caso de erro
+      await this.db.runAsync('ROLLBACK');
       console.error('Erro ao criar meta:', error);
       throw error;
     }
@@ -43,11 +68,18 @@ export class GoalService {
   // Obter todas as metas
   async getAllGoals(): Promise<Goal[]> {
     try {
-      const result = await this.db.getAllAsync<Goal>(
+      const goals = await this.db.getAllAsync<Goal>(
         `SELECT * FROM goals ORDER BY updatedAt DESC`
       );
       
-      return result;
+      // Obter tags para cada meta
+      for (const goal of goals) {
+        if (goal.id) {
+          goal.tags = await this.getGoalTagsById(goal.id);
+        }
+      }
+      
+      return goals;
     } catch (error) {
       console.error('Erro ao obter metas:', error);
       throw error;
@@ -57,14 +89,36 @@ export class GoalService {
   // Obter uma meta pelo ID
   async getGoalById(id: number): Promise<Goal | null> {
     try {
-      const result = await this.db.getFirstAsync<Goal>(
+      const goal = await this.db.getFirstAsync<Goal>(
         'SELECT * FROM goals WHERE id = ?',
         [id]
       );
       
-      return result;
+      if (goal) {
+        goal.tags = await this.getGoalTagsById(id);
+      }
+      
+      return goal;
     } catch (error) {
       console.error(`Erro ao obter meta ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Obter tags de uma meta pelo ID
+  async getGoalTagsById(goalId: number): Promise<Tag[]> {
+    try {
+      const tags = await this.db.getAllAsync<Tag>(
+        `SELECT t.* FROM tags t
+         INNER JOIN goal_tags gt ON t.id = gt.tag_id
+         WHERE gt.goal_id = ?
+         ORDER BY t.titulo ASC`,
+        [goalId]
+      );
+      
+      return tags;
+    } catch (error) {
+      console.error(`Erro ao obter tags da meta ID ${goalId}:`, error);
       throw error;
     }
   }
@@ -76,6 +130,10 @@ export class GoalService {
     }
 
     try {
+      // Iniciar transação
+      await this.db.runAsync('BEGIN TRANSACTION');
+      
+      // Atualizar meta
       await this.db.runAsync(
         `UPDATE goals 
          SET titulo = ?, descricao = ?, valorInicial = ?, valorAtual = ?, valorFinal = ?, 
@@ -92,7 +150,30 @@ export class GoalService {
           goal.id
         ]
       );
+      
+      // Remover todas as tags associadas
+      await this.db.runAsync(
+        `DELETE FROM goal_tags WHERE goal_id = ?`,
+        [goal.id]
+      );
+      
+      // Adicionar tags atualizadas
+      if (goal.tags && goal.tags.length > 0) {
+        for (const tag of goal.tags) {
+          if (tag.id) {
+            await this.db.runAsync(
+              `INSERT INTO goal_tags (goal_id, tag_id) VALUES (?, ?)`,
+              [goal.id, tag.id]
+            );
+          }
+        }
+      }
+      
+      // Commit transação
+      await this.db.runAsync('COMMIT');
     } catch (error) {
+      // Rollback em caso de erro
+      await this.db.runAsync('ROLLBACK');
       console.error(`Erro ao atualizar meta ID ${goal.id}:`, error);
       throw error;
     }
@@ -101,6 +182,7 @@ export class GoalService {
   // Excluir uma meta
   async deleteGoal(id: number): Promise<void> {
     try {
+      // As associações com tags serão excluídas automaticamente pelo ON DELETE CASCADE
       await this.db.runAsync('DELETE FROM goals WHERE id = ?', [id]);
     } catch (error) {
       console.error(`Erro ao excluir meta ID ${id}:`, error);
@@ -143,14 +225,21 @@ export class GoalService {
   // Buscar metas por título
   async searchGoalsByTitle(searchTerm: string): Promise<Goal[]> {
     try {
-      const result = await this.db.getAllAsync<Goal>(
+      const goals = await this.db.getAllAsync<Goal>(
         `SELECT * FROM goals 
          WHERE titulo LIKE ? 
          ORDER BY updatedAt DESC`,
         [`%${searchTerm}%`]
       );
       
-      return result;
+      // Obter tags para cada meta
+      for (const goal of goals) {
+        if (goal.id) {
+          goal.tags = await this.getGoalTagsById(goal.id);
+        }
+      }
+      
+      return goals;
     } catch (error) {
       console.error('Erro ao buscar metas:', error);
       throw error;
