@@ -76,7 +76,7 @@ const AboutComponent: React.FC<AboutComponentProps> = ({ title = 'Sobre o Aplica
           <Text style={styles.sectionTitle}>Contato</Text>
           <TouchableOpacity 
             style={styles.contactItem}
-            onPress={() => handleLinkPress('https://github.com/oLeall99/notes-app')}
+            onPress={() => handleLinkPress('https://github.com/oLeall99/CapyNotes')}
           >
             <Feather name="github" size={24} color="#554b46" style={styles.contactIcon} />
             <Text style={styles.contactText}>GitHub</Text>
