@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { SafeAreaView, StatusBar, View, Image } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { SafeAreaView, StatusBar, View, Image, DeviceEventEmitter } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { initializeDatabse } from './db/initializeDatabase';
 import { Home } from './screen/home';
-import Notas from './screen/notas';
-import Tarefas from './screen/tarefas';
-import Metas from './screen/metas';
+import Notes from './screen/notes';
+import Tasks from './screen/tasks';
+import Goals from './screen/goals';
 import Config from './screen/config';
 import SearchBar from './components/search';
 import Footer from './components/footer';
@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 // Previne que a splash screen seja escondida automaticamente
 SplashScreen.preventAutoHideAsync();
+
 
 const pageLabels: Record<PageKey, string> = {
   home: 'Hoje',
@@ -26,8 +27,16 @@ const pageLabels: Record<PageKey, string> = {
 
 type PageKey = 'home' | 'notas' | 'tarefas' | 'metas' | 'config';
 
+interface NavigationParams {
+  viewNoteId?: number;
+  viewTaskId?: number;
+  viewGoalId?: number;
+}
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<PageKey>('home');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [navigationParams, setNavigationParams] = useState<NavigationParams>({});
   
   // Carrega todas as fontes necessárias para o app
   const [fontsLoaded] = useFonts({
@@ -36,6 +45,29 @@ export default function App() {
     'Merriweather': require('./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf'),
     'Nunito': require('./assets/fonts/Nunito-VariableFont_wght.ttf'),
   });
+
+  // Listen for custom navigation events
+  useEffect(() => {
+    const handleNavigation = (data: any) => {
+      const { screen, params } = data;
+      
+      // Update navigation params
+      setNavigationParams(params || {});
+      
+      // Navigate to the requested screen
+      if (screen && Object.keys(pageLabels).includes(screen)) {
+        setCurrentScreen(screen as PageKey);
+      }
+    };
+
+    // Add event listener using DeviceEventEmitter
+    const subscription = DeviceEventEmitter.addListener('navigateToScreen', handleNavigation);
+
+    // Clean up
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Esconde a splash screen quando as fontes estiverem carregadas
   const onLayoutRootView = useCallback(async () => {
@@ -49,19 +81,24 @@ export default function App() {
     return null;
   }
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  // Create components with the appropriate props
   let PageComponent = null;
   switch (currentScreen) {
     case 'home':
       PageComponent = <Home />;
       break;
     case 'notas':
-      PageComponent = <Notas />;
+      PageComponent = <Notes initialViewNoteId={navigationParams.viewNoteId} />;
       break;
     case 'tarefas':
-      PageComponent = <Tarefas />;
+      PageComponent = <Tasks initialViewTaskId={navigationParams.viewTaskId} />;
       break;
     case 'metas':
-      PageComponent = <Metas />;
+      PageComponent = <Goals initialViewGoalId={navigationParams.viewGoalId} />;
       break;
     case 'config':
       PageComponent = <Config />;
@@ -73,14 +110,18 @@ export default function App() {
   return (
     <>
       <SQLite.SQLiteProvider databaseName="appnote.db" onInit={initializeDatabse}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar 
+          backgroundColor="#ddd0c2"
+          translucent={true}
+          barStyle="dark-content"
+        />
         <SafeAreaView 
-          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center' }}
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 0, paddingBottom: 60 }}
           onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
             paddingHorizontal: 20, 
-            marginTop: 10, 
+            marginTop: 40, 
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center'
@@ -96,10 +137,16 @@ export default function App() {
             />
           </View>
           {currentScreen !== 'config' && (
-            <SearchBar label={pageLabels[currentScreen]} />
+            <View style={{ width: '100%' }}>
+              {/* Componente SearchBar não necessário aqui pois agora é renderizado diretamente dentro da tela Notes */}
+            </View>
           )}
           {PageComponent}
-          <Footer current={currentScreen} onNavigate={screen => setCurrentScreen(screen as PageKey)} />
+          <Footer current={currentScreen} onNavigate={screen => {
+            setCurrentScreen(screen as PageKey);
+            // Clear navigation params when manually navigating
+            setNavigationParams({});
+          }} />
         </SafeAreaView>
       </SQLite.SQLiteProvider>
     </>

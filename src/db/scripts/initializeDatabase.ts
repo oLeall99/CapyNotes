@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     titulo TEXT NOT NULL,
     conteudo TEXT,
+    imagem TEXT,
     isFavorite INTEGER NOT NULL DEFAULT 0,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -39,11 +40,10 @@ CREATE TABLE IF NOT EXISTS goals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     titulo TEXT NOT NULL,
     descricao TEXT,
-    initial_value REAL NOT NULL,
-    finish_value REAL NOT NULL,
-    current_value REAL NOT NULL,
-    type TEXT CHECK(type IN ('$', 'int')) NOT NULL,
-    color TEXT,
+    valorInicial REAL NOT NULL,
+    valorAtual REAL NOT NULL,
+    valorFinal REAL NOT NULL,
+    tipo TEXT CHECK(tipo IN ('inteiro', 'dinheiro')) NOT NULL,
     isFavorite INTEGER NOT NULL DEFAULT 0,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
