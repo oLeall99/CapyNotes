@@ -61,34 +61,7 @@ const Tasks: React.FC = () => {
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
-    
-    // Se o termo estiver vazio, simplesmente limpe a busca sem mostrar indicador de carregamento
-    if (term.trim() === '') {
-      try {
-        const allTasks = await taskService.getAllTasks();
-        setTodoTasks(allTasks.filter(task => task.status === 'TO_DO'));
-        setInProgressTasks(allTasks.filter(task => task.status === 'IN_PROGRESS'));
-        setDoneTasks(allTasks.filter(task => task.status === 'DONE'));
-      } catch (error) {
-        console.error('Erro ao carregar tarefas:', error);
-      }
-      return;
-    }
-    
-    // Apenas para a busca com termos, mostrar indicador
-    try {
-      setIsLoading(true);
-      const searchResults = await taskService.searchTasksByTitle(term);
-      
-      // Separa os resultados da busca por status
-      setTodoTasks(searchResults.filter(task => task.status === 'TO_DO'));
-      setInProgressTasks(searchResults.filter(task => task.status === 'IN_PROGRESS'));
-      setDoneTasks(searchResults.filter(task => task.status === 'DONE'));
-    } catch (error) {
-      console.error('Erro ao buscar tarefas:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    loadTasks();
   };
 
   const handleAddTask = async (titulo: string, descricao: string, status: TaskStatus) => {
@@ -246,13 +219,6 @@ const Tasks: React.FC = () => {
     setModalVisible(true);
   };
 
-  const renderEmptyState = (message: string) => (
-    <View style={styles.emptyStateContainer}>
-      <Feather name="clipboard" size={24} color="#888" />
-      <Text style={styles.emptyStateText}>{message}</Text>
-    </View>
-  );
-
   const renderTaskList = (tasks: Task[], emptyMessage: string) => (
     <View style={styles.taskListContainer}>
       {tasks.length > 0 ? (
@@ -269,6 +235,9 @@ const Tasks: React.FC = () => {
           )}
           keyExtractor={(item) => String(item.id)}
           scrollEnabled={false}
+          removeClippedSubviews={true}
+          ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
+          contentContainerStyle={{ paddingVertical: 1 }}
         />
       ) : (
         renderEmptyState(emptyMessage)
@@ -276,47 +245,12 @@ const Tasks: React.FC = () => {
     </View>
   );
 
-  const renderTasksContent = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.loadingTasksContainer}>
-          <ActivityIndicator size="large" color="#554b46" />
-          <Text style={styles.loadingText}>Carregando tarefas...</Text>
-        </View>
-      );
-    }
-
-    return (
-      <ScrollView>
-        {/* Seção de Tarefas a Fazer */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>A Fazer</Text>
-            <View style={[styles.statusIndicator, { backgroundColor: '#FF6B6B' }]} />
-          </View>
-          {renderTaskList(todoTasks, searchTerm ? 'Nenhuma tarefa pendente encontrada' : 'Nenhuma tarefa pendente')}
-        </View>
-        
-        {/* Seção de Tarefas em Andamento */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Em Andamento</Text>
-            <View style={[styles.statusIndicator, { backgroundColor: '#FFD700' }]} />
-          </View>
-          {renderTaskList(inProgressTasks, searchTerm ? 'Nenhuma tarefa em andamento encontrada' : 'Nenhuma tarefa em andamento')}
-        </View>
-        
-        {/* Seção de Tarefas Concluídas */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Concluído</Text>
-            <View style={[styles.statusIndicator, { backgroundColor: '#4CAF50' }]} />
-          </View>
-          {renderTaskList(doneTasks, searchTerm ? 'Nenhuma tarefa concluída encontrada' : 'Nenhuma tarefa concluída')}
-        </View>
-      </ScrollView>
-    );
-  };
+  const renderEmptyState = (message: string) => (
+    <View style={styles.emptyStateContainer}>
+      <Feather name="clipboard" size={16} color="#888" />
+      <Text style={styles.emptyStateText}>{message}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -324,8 +258,44 @@ const Tasks: React.FC = () => {
         <SearchBar label="Buscar tarefas..." onSearch={handleSearch} />
       </View>
       
-      {/* Conteúdo condicional de tarefas */}
-      {renderTasksContent()}
+      {isLoading ? (
+        <View style={styles.loadingTasksContainer}>
+          <ActivityIndicator size="large" color="#554b46" />
+          <Text style={styles.loadingText}>Carregando tarefas...</Text>
+        </View>
+      ) : (
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 70 }}
+        >
+          {/* Seção de Tarefas a Fazer */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.statusIndicator, { backgroundColor: '#FF6B6B', marginRight: 4 }]} />
+              <Text style={styles.sectionTitle}>A Fazer</Text>
+            </View>
+            {renderTaskList(todoTasks, searchTerm ? 'Nenhuma tarefa pendente encontrada' : 'Nenhuma tarefa pendente')}
+          </View>
+          
+          {/* Seção de Tarefas em Andamento */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.statusIndicator, { backgroundColor: '#FFD700', marginRight: 4 }]} />
+              <Text style={styles.sectionTitle}>Em Andamento</Text>
+            </View>
+            {renderTaskList(inProgressTasks, searchTerm ? 'Nenhuma tarefa em andamento encontrada' : 'Nenhuma tarefa em andamento')}
+          </View>
+          
+          {/* Seção de Tarefas Concluídas */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.statusIndicator, { backgroundColor: '#4CAF50', marginRight: 4 }]} />
+              <Text style={styles.sectionTitle}>Concluído</Text>
+            </View>
+            {renderTaskList(doneTasks, searchTerm ? 'Nenhuma tarefa concluída encontrada' : 'Nenhuma tarefa concluída')}
+          </View>
+        </ScrollView>
+      )}
       
       {/* Botão flutuante para adicionar nova tarefa */}
       <TouchableOpacity 
@@ -367,47 +337,49 @@ const styles = StyleSheet.create({
   searchContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   section: {
-    marginBottom: 15,
-    paddingHorizontal: 16,
+    marginBottom: 6,
+    paddingHorizontal: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 2,
+    marginTop: 2,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginRight: 8,
+    marginRight: 4,
     color: '#554b46',
     fontFamily: 'Nunito',
   },
   statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   taskListContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderRadius: 8,
-    padding: 10,
-    minHeight: 50,
+    borderRadius: 4,
+    padding: 3,
+    minHeight: 30,
   },
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    padding: 6,
   },
   emptyStateText: {
     color: '#888',
-    marginTop: 8,
+    marginTop: 2,
     fontFamily: 'Nunito',
     textAlign: 'center',
+    fontSize: 10,
   },
   addButton: {
     position: 'absolute',
