@@ -35,6 +35,24 @@ CapyNote é uma aplicação mobile que oferece uma interface simples e intuitiva
    npx expo start
    ```
 
+## Download e Instalação
+
+### Para dispositivos Android
+
+1. Faça o download do APK através do link abaixo:
+   - [Baixar CapyNotes (versão mais recente)](https://expo.dev/accounts/leall/projects/app-note/builds/6ac06fa8-ba6e-4846-9fa6-06e4d445c5db)
+
+2. **Instruções de instalação**:
+   - Ao baixar o arquivo, seu dispositivo pode alertar sobre a instalação de aplicativos de fontes desconhecidas
+   - Permita a instalação nas configurações de segurança do seu dispositivo
+   - Abra o arquivo APK baixado e siga as instruções na tela para concluir a instalação
+
+### Requisitos mínimos
+- Android 6.0 (Marshmallow) ou superior
+- 50MB de armazenamento disponível
+
+> **Nota**: Este é um aplicativo de teste em desenvolvimento e pode conter funcionalidades incompletas.
+
 ## Estrutura do Projeto
 
 A arquitetura do projeto segue um padrão organizado para facilitar manutenção e escalabilidade:
