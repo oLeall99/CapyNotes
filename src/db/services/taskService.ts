@@ -284,4 +284,29 @@ export class TaskService {
       throw error;
     }
   }
+
+  // Buscar tarefas por tag
+  async searchTasksByTag(tagId: number): Promise<Task[]> {
+    try {
+      const tasks = await this.db.getAllAsync<Task>(
+        `SELECT t.* FROM tasks t
+         INNER JOIN task_tags tt ON t.id = tt.task_id
+         WHERE tt.tag_id = ?
+         ORDER BY t.updatedAt DESC`,
+        [tagId]
+      );
+      
+      // Obter tags para cada tarefa
+      for (const task of tasks) {
+        if (task.id) {
+          task.tags = await this.getTaskTagsById(task.id);
+        }
+      }
+      
+      return tasks;
+    } catch (error) {
+      console.error('Erro ao buscar tarefas por tag:', error);
+      throw error;
+    }
+  }
 } 

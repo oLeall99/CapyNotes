@@ -5,7 +5,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Goal, GoalService } from '../../db/services/goalService';
 import { Task, TaskService } from '../../db/services/taskService';
 import { Note, NoteService } from '../../db/services/noteService';
+import { Tag } from '../../db/services/tagService';
 import SearchBar from '../../components/search';
+import TagSelector from '../../components/TagSelector';
 import SearchResultItem from '../../components/SearchResultItem';
 
 type ItemType = 'goal' | 'task' | 'note';
@@ -27,6 +29,7 @@ export function Home() {
   const noteService = new NoteService(db);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteGoals, setFavoriteGoals] = useState<Goal[]>([]);
   const [favoriteTasks, setFavoriteTasks] = useState<Task[]>([]);
@@ -38,12 +41,12 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    if (searchTerm.trim()) {
+    if (searchTerm.trim() || selectedTags.length > 0) {
       performSearch();
     } else {
       setSearchResults([]);
     }
-  }, [searchTerm]);
+  }, [searchTerm, selectedTags]);
 
   const loadFavorites = async () => {
     try {
@@ -66,10 +69,56 @@ export function Home() {
     try {
       setIsLoading(true);
       
-      // Buscar os resultados
-      const goals = await goalService.searchGoalsByTitle(searchTerm);
-      const tasks = await taskService.searchTasksByTitle(searchTerm);
-      const notes = await noteService.searchNotesByTitle(searchTerm);
+      let goals: Goal[] = [];
+      let tasks: Task[] = [];
+      let notes: Note[] = [];
+      
+      // Se tiver tags selecionadas, busca por tags
+      if (selectedTags.length > 0) {
+        // Buscar itens para cada tag selecionada
+        let allGoals: Goal[] = [];
+        let allTasks: Task[] = [];
+        let allNotes: Note[] = [];
+        
+        for (const tag of selectedTags) {
+          if (tag.id) {
+            const tagGoals = await goalService.searchGoalsByTag(tag.id);
+            const tagTasks = await taskService.searchTasksByTag(tag.id);
+            const tagNotes = await noteService.searchNotesByTag(tag.id);
+            
+            allGoals = [...allGoals, ...tagGoals];
+            allTasks = [...allTasks, ...tagTasks];
+            allNotes = [...allNotes, ...tagNotes];
+          }
+        }
+        
+        // Remover duplicatas (itens com múltiplas tags selecionadas)
+        goals = allGoals.filter((goal, index, self) => 
+          index === self.findIndex(g => g.id === goal.id)
+        );
+        
+        tasks = allTasks.filter((task, index, self) => 
+          index === self.findIndex(t => t.id === task.id)
+        );
+        
+        notes = allNotes.filter((note, index, self) => 
+          index === self.findIndex(n => n.id === note.id)
+        );
+        
+        // Se também tiver termo de busca, filtra os resultados por título
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
+          goals = goals.filter(goal => goal.titulo.toLowerCase().includes(term));
+          tasks = tasks.filter(task => task.titulo.toLowerCase().includes(term));
+          notes = notes.filter(note => note.titulo.toLowerCase().includes(term));
+        }
+      } 
+      // Se não tiver tags selecionadas, busca apenas pelo termo
+      else if (searchTerm.trim()) {
+        goals = await goalService.searchGoalsByTitle(searchTerm);
+        tasks = await taskService.searchTasksByTitle(searchTerm);
+        notes = await noteService.searchNotesByTitle(searchTerm);
+      }
       
       // Converter para formato de seção
       const noteResults: SearchResult[] = notes.map(note => ({ item: note, type: 'note' }));
@@ -110,6 +159,10 @@ export function Home() {
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
+  };
+
+  const handleTagsSelected = (tags: Tag[]) => {
+    setSelectedTags(tags);
   };
 
   const handleItemPress = (item: Goal | Task | Note, type: ItemType) => {
@@ -211,7 +264,7 @@ export function Home() {
           <MaterialIcons name="search" size={48} color="#888" />
           <Text style={styles.emptyText}>Nenhum resultado encontrado</Text>
           <Text style={styles.emptySubText}>
-            Tente buscar outro termo
+            Tente buscar outro termo {selectedTags.length > 0 && 'ou remover filtros de tags'}
           </Text>
         </View>
       );
@@ -229,22 +282,33 @@ export function Home() {
     );
   };
 
+  const isSearchActive = searchTerm.trim() || selectedTags.length > 0;
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <SearchBar label="Buscar metas, tarefas ou notas..." onSearch={handleSearch} />
+        <View style={styles.searchBarContainer}>
+          <SearchBar label="Buscar metas, tarefas ou notas..." onSearch={handleSearch} />
+        </View>
       </View>
       
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#554b46" />
-          <Text style={styles.loadingText}>Carregando...</Text>
-        </View>
-      ) : (
-        <View style={styles.contentContainer}>
-          {searchTerm.trim() ? renderSearchResults() : renderFavoriteContent()}
-        </View>
-      )}
+      <View style={styles.contentWrapper}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#554b46" />
+            <Text style={styles.loadingText}>Carregando...</Text>
+          </View>
+        ) : (
+          <View style={styles.contentContainer}>
+            {isSearchActive ? renderSearchResults() : renderFavoriteContent()}
+          </View>
+        )}
+        
+        <TagSelector 
+          selectedTags={selectedTags} 
+          onTagsSelected={handleTagsSelected} 
+        />
+      </View>
     </View>
   );
 }
@@ -263,6 +327,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd0c2',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  searchBarContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  contentWrapper: {
+    flex: 1,
+    position: 'relative',
   },
   contentContainer: {
     flex: 1,
