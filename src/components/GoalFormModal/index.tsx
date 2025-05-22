@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { Goal } from '../db/services/goalService';
+import { Goal } from '../../db/services/goalService';
 
 interface GoalFormModalProps {
   visible: boolean;

@@ -2319,6 +2319,11 @@ expo-asset@~11.1.5:
     "@expo/image-utils" "^0.7.4"
     expo-constants "~17.1.5"
 
+expo-audio@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.npmjs.org/expo-audio/-/expo-audio-0.4.5.tgz"
+  integrity sha512-QYJ9yLFAfH+YPYheqolbYL812lZWAsZVuRPrM6LZBsYYocaTTVVLQj+nggXKZwAjrIpQwpvH7jcziJy22I5Xpw==
+
 expo-constants@~17.1.5:
   version "17.1.5"
   resolved "https://registry.npmjs.org/expo-constants/-/expo-constants-17.1.5.tgz"

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Goal, GoalService } from '../../db/services/goalService';
 import { updateGoalTable } from '../../db/migrations/updateGoalTable';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import GoalDetailModal from '../../components/GoalDetailModal';
 import GoalFormModal from '../../components/GoalFormModal';
+import GoalCard from '../../components/GoalCard';
 import SearchBar from '../../components/search';
 
 const Goals: React.FC = () => {
@@ -161,109 +162,6 @@ const Goals: React.FC = () => {
     setDetailModalVisible(true);
   };
 
-  const formatValue = (value: number, tipo: 'inteiro' | 'dinheiro') => {
-    if (tipo === 'dinheiro') {
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
-    }
-    return value.toString();
-  };
-
-  const renderGoalItem = ({ item }: { item: Goal }) => {
-    const progress = (item.valorAtual - item.valorInicial) / (item.valorFinal - item.valorInicial);
-    const adjustedProgress = Math.min(Math.max(0, progress), 1); // Limita entre 0 e 1
-    
-    return (
-      <TouchableOpacity 
-        style={styles.goalCard}
-        onPress={() => handleViewGoalDetails(item)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.goalHeader}>
-          <Text style={styles.goalTitle} numberOfLines={1} ellipsizeMode="tail">
-            {item.titulo}
-          </Text>
-          <View style={styles.goalActions}>
-            <TouchableOpacity 
-              onPress={(e) => {
-                e.stopPropagation();
-                handleEditGoal(item);
-              }}
-            >
-              <MaterialIcons 
-                name="edit" 
-                size={24} 
-                color="#FFD700"
-                style={styles.actionIcon}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={(e) => {
-                e.stopPropagation();
-                confirmDelete(item.id as number);
-              }}
-            >
-              <MaterialIcons 
-                name="delete-outline" 
-                size={24} 
-                color="#FF6B6B"
-                style={styles.actionIcon}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={(e) => {
-                e.stopPropagation();
-                handleFavoriteToggle(item.id as number);
-              }}
-            >
-              <MaterialIcons 
-                name={item.isFavorite ? "star" : "star-outline"} 
-                size={24} 
-                color={item.isFavorite ? "#FFD700" : "#888"}
-                style={styles.actionIcon}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {item.descricao ? (
-          <Text style={styles.goalDescription} numberOfLines={1} ellipsizeMode="tail">
-            {item.descricao}
-          </Text>
-        ) : null}
-
-        <View style={styles.progressBarContainer}>
-          <View 
-            style={[
-              styles.progressBarFill, 
-              { width: `${Math.round(adjustedProgress * 100)}%` }
-            ]} 
-          />
-        </View>
-
-        <View style={styles.goalValuesContainer}>
-          <Text style={styles.goalValue}>
-            {formatValue(item.valorInicial, item.tipo)}
-          </Text>
-          <Text style={styles.goalProgressText}>
-            {Math.round(adjustedProgress * 100)}%
-          </Text>
-          <Text style={styles.goalValue}>
-            {formatValue(item.valorFinal, item.tipo)}
-          </Text>
-        </View>
-
-        <View style={styles.goalFooter}>
-          <Text style={styles.goalCurrentValue}>
-            Atual: {formatValue(item.valorAtual, item.tipo)}
-          </Text>
-          <Text style={styles.goalDate}>
-            {new Date(item.createdAt as string).toLocaleDateString('pt-BR')}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   const handleEditGoal = (goal?: Goal) => {
     const goalToEdit = goal || selectedGoal;
     if (goalToEdit) {
@@ -277,6 +175,16 @@ const Goals: React.FC = () => {
     setSelectedGoal(null);
     setModalVisible(true);
   };
+
+  const renderGoalItem = ({ item }: { item: Goal }) => (
+    <GoalCard
+      goal={item}
+      onPress={handleViewGoalDetails}
+      onEdit={handleEditGoal}
+      onDelete={confirmDelete}
+      onFavoriteToggle={handleFavoriteToggle}
+    />
+  );
 
   return (
     <View style={styles.container}>
@@ -379,87 +287,6 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginTop: 8,
-    fontFamily: 'Nunito',
-  },
-  goalCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#554b46',
-    flex: 1,
-    marginRight: 8,
-    fontFamily: 'Nunito',
-  },
-  goalActions: {
-    flexDirection: 'row',
-  },
-  actionIcon: {
-    marginLeft: 10,
-  },
-  goalDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-    fontFamily: 'Nunito',
-  },
-  progressBarContainer: {
-    height: 12,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-  },
-  goalValuesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  goalValue: {
-    fontSize: 12,
-    color: '#777',
-    fontFamily: 'Nunito',
-  },
-  goalProgressText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    fontFamily: 'Nunito',
-  },
-  goalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  goalCurrentValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    fontFamily: 'Nunito',
-  },
-  goalDate: {
-    fontSize: 12,
-    color: '#888',
     fontFamily: 'Nunito',
   },
   addButton: {
