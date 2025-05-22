@@ -11,6 +11,7 @@ import {
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Task, TaskService, TaskStatus } from '../../db/services/taskService';
+import { Tag } from '../../db/services/tagService';
 import TaskItem from '../../components/TaskItem';
 import TaskFormModal from '../../components/TaskFormModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
@@ -64,7 +65,7 @@ const Tasks: React.FC = () => {
     loadTasks();
   };
 
-  const handleAddTask = async (titulo: string, descricao: string, status: TaskStatus) => {
+  const handleAddTask = async (titulo: string, descricao: string, status: TaskStatus, tags: Tag[]) => {
     try {
       // Fechar modal imediatamente para melhorar UX
       setModalVisible(false);
@@ -75,7 +76,8 @@ const Tasks: React.FC = () => {
           ...selectedTask,
           titulo,
           descricao,
-          status
+          status,
+          tags
         };
         
         // Atualização otimista da UI
@@ -105,7 +107,8 @@ const Tasks: React.FC = () => {
         const newTaskId = await taskService.createTask({
           titulo,
           descricao,
-          status
+          status,
+          tags
         });
         
         // Recarregar tarefas após criação (única operação que precisa de reload completo)
@@ -236,8 +239,8 @@ const Tasks: React.FC = () => {
           keyExtractor={(item) => String(item.id)}
           scrollEnabled={false}
           removeClippedSubviews={true}
-          ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
-          contentContainerStyle={{ paddingVertical: 1 }}
+          ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
+          contentContainerStyle={{ paddingVertical: 2 }}
         />
       ) : (
         renderEmptyState(emptyMessage)
@@ -369,7 +372,7 @@ const styles = StyleSheet.create({
   taskListContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 4,
-    padding: 3,
+    padding: 4,
     minHeight: 30,
   },
   emptyStateContainer: {
