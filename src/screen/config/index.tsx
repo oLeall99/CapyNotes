@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import TagsComponent from '../../components/TagsComponent';
+import AboutComponent from '../../components/AboutComponent';
 
 const Config: React.FC = () => {
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.text}>Configurações e sobre o app.</Text>
-      </View>
+      <ScrollView style={styles.scrollView}>
+        <TagsComponent title="Gerenciar Tags" />
+        <AboutComponent title="Sobre o Aplicativo" />
+      </ScrollView>
     </View>
   );
 };
@@ -17,16 +20,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd0c2',
     width: '100%',
   },
-  content: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 60, // Espaço para o footer
-  },
-  text: {
-    fontSize: 18,
-    color: '#554b46',
-    fontFamily: 'Nunito',
+    paddingBottom: 20,
   },
 });
 
