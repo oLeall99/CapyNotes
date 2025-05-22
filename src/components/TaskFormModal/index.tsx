@@ -8,16 +8,19 @@ import {
   StyleSheet, 
   TouchableWithoutFeedback,
   Keyboard,
-  Pressable
+  Pressable,
+  ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Task, TaskStatus } from '../../db/services/taskService';
+import { Tag, TagService } from '../../db/services/tagService';
+import { useSQLiteContext } from 'expo-sqlite';
 
 interface TaskFormModalProps {
   visible: boolean;
   task: Task | null;
   onClose: () => void;
-  onSave: (titulo: string, descricao: string, status: TaskStatus) => void;
+  onSave: (titulo: string, descricao: string, status: TaskStatus, tags: Tag[]) => void;
 }
 
 const TaskFormModal: React.FC<TaskFormModalProps> = ({
@@ -26,10 +29,22 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   onClose,
   onSave
 }) => {
+  const db = useSQLiteContext();
+  const tagService = new TagService(db);
+  
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [status, setStatus] = useState<TaskStatus>('TO_DO');
   const [tituloError, setTituloError] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [isTagsLoading, setIsTagsLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      loadTags();
+    }
+  }, [visible]);
 
   useEffect(() => {
     // Preencher os campos se estiver editando uma tarefa existente
@@ -37,15 +52,29 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
       setTitulo(task.titulo);
       setDescricao(task.descricao || '');
       setStatus(task.status as TaskStatus || 'TO_DO');
+      setSelectedTags(task.tags || []);
     } else {
       // Limpar os campos se estiver criando uma nova tarefa
       setTitulo('');
       setDescricao('');
       setStatus('TO_DO');
+      setSelectedTags([]);
     }
     
     setTituloError(false);
   }, [task, visible]);
+
+  const loadTags = async () => {
+    try {
+      setIsTagsLoading(true);
+      const tags = await tagService.getAllTags();
+      setAvailableTags(tags);
+    } catch (error) {
+      console.error('Erro ao carregar tags:', error);
+    } finally {
+      setIsTagsLoading(false);
+    }
+  };
 
   const handleSave = () => {
     if (titulo.trim() === '') {
@@ -53,12 +82,13 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
       return;
     }
     
-    onSave(titulo, descricao, status);
+    onSave(titulo, descricao, status, selectedTags);
     
     // Limpar campos e erros após salvar
     setTitulo('');
     setDescricao('');
     setStatus('TO_DO');
+    setSelectedTags([]);
     setTituloError(false);
   };
 
@@ -92,6 +122,39 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     return labels[statusValue];
   };
 
+  const toggleTagSelection = (tag: Tag) => {
+    if (isTagSelected(tag)) {
+      // Remove a tag da seleção
+      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+    } else {
+      // Adiciona a tag à seleção
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const isTagSelected = (tag: Tag): boolean => {
+    return selectedTags.some(t => t.id === tag.id);
+  };
+
+  const renderTagItem = (tag: Tag) => (
+    <TouchableOpacity
+      key={tag.id}
+      style={[
+        styles.tagItem,
+        { backgroundColor: isTagSelected(tag) ? tag.color || '#808080' : 'transparent' },
+        { borderColor: tag.color || '#808080' }
+      ]}
+      onPress={() => toggleTagSelection(tag)}
+    >
+      <Text style={[
+        styles.tagText,
+        { color: isTagSelected(tag) ? '#fff' : tag.color || '#808080' }
+      ]}>
+        {tag.titulo}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <Modal
       animationType="slide"
@@ -111,53 +174,71 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </TouchableOpacity>
             </View>
             
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Título*</Text>
-              <TextInput
-                style={[styles.input, tituloError && styles.inputError]}
-                placeholder="Título da tarefa"
-                value={titulo}
-                onChangeText={(text) => {
-                  setTitulo(text);
-                  if (text.trim() !== '') {
-                    setTituloError(false);
-                  }
-                }}
-              />
-              {tituloError && (
-                <Text style={styles.errorText}>O título é obrigatório</Text>
-              )}
-            </View>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Descrição</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Descrição da tarefa"
-                value={descricao}
-                onChangeText={setDescricao}
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Status</Text>
-              <Pressable 
-                style={[styles.statusButton, { backgroundColor: getStatusColor(status) }]}
-                onPress={toggleStatus}
+            <ScrollView style={styles.scrollContainer}>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Título*</Text>
+                <TextInput
+                  style={[styles.input, tituloError && styles.inputError]}
+                  placeholder="Título da tarefa"
+                  value={titulo}
+                  onChangeText={(text) => {
+                    setTitulo(text);
+                    if (text.trim() !== '') {
+                      setTituloError(false);
+                    }
+                  }}
+                />
+                {tituloError && (
+                  <Text style={styles.errorText}>O título é obrigatório</Text>
+                )}
+              </View>
+              
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Descrição</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Descrição da tarefa"
+                  value={descricao}
+                  onChangeText={setDescricao}
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+              
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Status</Text>
+                <Pressable 
+                  style={[styles.statusButton, { backgroundColor: getStatusColor(status) }]}
+                  onPress={toggleStatus}
+                >
+                  <Text style={styles.statusButtonText}>{getStatusLabel(status)}</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Tags</Text>
+                {isTagsLoading ? (
+                  <Text style={styles.loadingText}>Carregando tags...</Text>
+                ) : availableTags.length > 0 ? (
+                  <View style={styles.tagsContainer}>
+                    {availableTags.map(tag => renderTagItem(tag))}
+                  </View>
+                ) : (
+                  <View style={styles.noTagsContainer}>
+                    <Text style={styles.noTagsText}>Nenhuma tag disponível</Text>
+                    <Text style={styles.noTagsSubText}>Crie tags na tela de configurações</Text>
+                  </View>
+                )}
+              </View>
+              
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSave}
               >
-                <Text style={styles.statusButtonText}>{getStatusLabel(status)}</Text>
-              </Pressable>
-            </View>
-            
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSave}
-            >
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </TouchableOpacity>
+                <Text style={styles.saveButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -174,6 +255,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '90%',
+    maxHeight: '80%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
@@ -182,6 +264,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  scrollContainer: {
+    flexGrow: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -236,6 +321,48 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'Nunito',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+  },
+  tagItem: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    margin: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagText: {
+    fontSize: 12,
+    fontFamily: 'Nunito',
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#888',
+    marginVertical: 10,
+    fontFamily: 'Nunito',
+  },
+  noTagsContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    padding: 10,
+  },
+  noTagsText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Nunito',
+  },
+  noTagsSubText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 5,
     fontFamily: 'Nunito',
   },
   saveButton: {

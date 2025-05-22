@@ -7,6 +7,7 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import NoteDetailModal from '../../components/NoteDetailModal';
 import NoteFormModal from '../../components/NoteFormModal';
 import SearchBar from '../../components/search';
+import { Tag } from '../../db/services/tagService';
 
 const Notes: React.FC = () => {
   const db = useSQLiteContext();
@@ -63,7 +64,7 @@ const Notes: React.FC = () => {
     }
   };
 
-  const handleAddNote = async (titulo: string, conteudo: string, imagem: string | null) => {
+  const handleAddNote = async (titulo: string, conteudo: string, imagem: string | null, tags: Tag[]) => {
     try {
       if (selectedNote?.id) {
         // Se há um ID, estamos editando uma nota existente
@@ -71,7 +72,8 @@ const Notes: React.FC = () => {
           id: selectedNote.id,
           titulo,
           conteudo,
-          imagem
+          imagem,
+          tags
         });
         setSelectedNote(null);
       } else {
@@ -79,7 +81,8 @@ const Notes: React.FC = () => {
         await noteService.createNote({
           titulo,
           conteudo,
-          imagem
+          imagem,
+          tags
         });
       }
       
@@ -190,9 +193,28 @@ const Notes: React.FC = () => {
             </Text>
           ) : null}
           
-          <Text style={styles.noteDate}>
-            {new Date(item.createdAt as string).toLocaleDateString('pt-BR')}
-          </Text>
+          <View style={styles.noteFooter}>
+            {item.tags && item.tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {item.tags.slice(0, 2).map(tag => (
+                  <View 
+                    key={tag.id} 
+                    style={[styles.tagBadge, { backgroundColor: tag.color || '#808080' }]}
+                  >
+                    <Text style={styles.tagText} numberOfLines={1}>{tag.titulo}</Text>
+                  </View>
+                ))}
+                {item.tags.length > 2 && (
+                  <View style={styles.moreTagsBadge}>
+                    <Text style={styles.moreTagsText}>+{item.tags.length - 2}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+            <Text style={styles.noteDate}>
+              {new Date(item.createdAt as string).toLocaleDateString('pt-BR')}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -370,11 +392,46 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     fontFamily: 'Nunito',
   },
+  noteFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 'auto',
+    paddingTop: 5,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    flex: 1,
+  },
+  tagBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 4,
+    maxWidth: 80,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: 'bold',
+    fontFamily: 'Nunito',
+  },
+  moreTagsBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#aaa',
+  },
+  moreTagsText: {
+    color: '#fff',
+    fontSize: 9,
+    fontFamily: 'Nunito',
+  },
   noteDate: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#888',
     textAlign: 'right',
-    marginTop: 'auto',
     fontFamily: 'Nunito',
   },
   addButton: {

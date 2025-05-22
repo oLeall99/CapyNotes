@@ -56,7 +56,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
         >
           <MaterialIcons 
             name={getStatusIcon(task.status as TaskStatus)} 
-            size={10} 
+            size={12} 
             color="#fff" 
           />
         </TouchableOpacity>
@@ -72,7 +72,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           >
             <MaterialIcons 
               name={task.isFavorite ? "star" : "star-outline"} 
-              size={12} 
+              size={18} 
               color={task.isFavorite ? "#FFD700" : "#888"}
             />
           </TouchableOpacity>
@@ -83,7 +83,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           >
             <MaterialIcons 
               name="edit" 
-              size={12} 
+              size={18} 
               color="#FFD700"
             />
           </TouchableOpacity>
@@ -94,29 +94,48 @@ const TaskItem: React.FC<TaskItemProps> = ({
           >
             <MaterialIcons 
               name="delete-outline" 
-              size={12} 
+              size={18} 
               color="#FF6B6B"
             />
           </TouchableOpacity>
         </View>
       </View>
       
-      {/* Second row with description and date */}
-      {(task.descricao || task.createdAt) && (
+      {/* Second row with description */}
+      {task.descricao && (
         <View style={styles.secondRow}>
-          {task.descricao ? (
-            <Text style={styles.taskDescription} numberOfLines={1} ellipsizeMode="tail">
-              {task.descricao}
-            </Text>
-          ) : <View style={{ flex: 1 }} />}
-          
-          {task.createdAt && (
-            <Text style={styles.taskDate}>
-              {new Date(task.createdAt as string).toLocaleDateString('pt-BR')}
-            </Text>
-          )}
+          <Text style={styles.taskDescription} numberOfLines={1} ellipsizeMode="tail">
+            {task.descricao}
+          </Text>
         </View>
       )}
+      
+      {/* Third row with tags and date */}
+      <View style={styles.thirdRow}>
+        {task.tags && task.tags.length > 0 ? (
+          <View style={styles.tagsContainer}>
+            {task.tags.slice(0, 2).map(tag => (
+              <View 
+                key={tag.id} 
+                style={[styles.tagBadge, { backgroundColor: tag.color || '#808080' }]}
+              >
+                <Text style={styles.tagText} numberOfLines={1}>{tag.titulo}</Text>
+              </View>
+            ))}
+            {task.tags.length > 2 && (
+              <View style={styles.moreTagsBadge}>
+                <Text style={styles.moreTagsText}>+{task.tags.length - 2}</Text>
+              </View>
+            )}
+          </View>
+        ) : <View style={{ flex: 1 }} />}
+        
+        {task.createdAt && (
+          <Text style={styles.taskDate}>
+            {new Date(task.createdAt as string).toLocaleDateString('pt-BR')}
+          </Text>
+        )}
+      </View>
     </View>
   );
 };
@@ -125,7 +144,7 @@ const styles = StyleSheet.create({
   taskCard: {
     backgroundColor: '#fff',
     borderRadius: 4,
-    padding: 4,
+    padding: 6,
     marginBottom: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -141,20 +160,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 1,
-    paddingLeft: 20, // Same as statusIndicator width + some margin
+    marginTop: 2,
+    paddingLeft: 24, // Increased to match new statusIndicator width + margin
+  },
+  thirdRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 3,
+    paddingLeft: 24, // Increased to match new statusIndicator width + margin
   },
   statusIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 4,
   },
   taskTitle: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#554b46',
     fontFamily: 'Nunito',
@@ -165,19 +191,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButton: {
-    marginLeft: 4,
-    padding: 1,
+    marginLeft: 5,
+    padding: 2,
   },
   taskDescription: {
     flex: 1,
-    fontSize: 9,
+    fontSize: 10,
     color: '#777',
     fontFamily: 'Nunito',
     marginRight: 4,
   },
   taskDate: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#999',
+    fontFamily: 'Nunito',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    flex: 1,
+  },
+  tagBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 5,
+    marginRight: 3,
+    maxWidth: 60,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
+    fontFamily: 'Nunito',
+  },
+  moreTagsBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 5,
+    backgroundColor: '#aaa',
+  },
+  moreTagsText: {
+    color: '#fff',
+    fontSize: 8,
     fontFamily: 'Nunito',
   },
 });

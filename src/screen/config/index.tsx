@@ -1,12 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
+import TagsComponent from '../../components/TagsComponent';
+import AboutComponent from '../../components/AboutComponent';
 
 const Config: React.FC = () => {
+  // Data for the FlatList
+  const sections = [
+    { id: 'tags', component: <TagsComponent title="Gerenciar Tags" /> },
+    { id: 'about', component: <AboutComponent title="Sobre o Aplicativo" /> }
+  ];
+
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.text}>Configurações e sobre o app.</Text>
-      </View>
+      <FlatList
+        data={sections}
+        renderItem={({ item }) => item.component}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+      />
     </View>
   );
 };
@@ -17,16 +28,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd0c2',
     width: '100%',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 60, // Espaço para o footer
-  },
-  text: {
-    fontSize: 18,
-    color: '#554b46',
-    fontFamily: 'Nunito',
+  listContent: {
+    paddingBottom: 20,
   },
 });
 
