@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SectionList } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Goal, GoalService } from '../../db/services/goalService';
@@ -9,6 +9,11 @@ import GoalDetailModal from '../../components/GoalDetailModal';
 import GoalFormModal from '../../components/GoalFormModal';
 import GoalCard from '../../components/GoalCard';
 import SearchBar from '../../components/search';
+
+interface GoalSection {
+  title: string;
+  data: Goal[];
+}
 
 const Goals: React.FC = () => {
   const db = useSQLiteContext();
@@ -22,6 +27,41 @@ const Goals: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Separar metas ativas das completadas
+  const goalSections = useMemo(() => {
+    const activeGoals: Goal[] = [];
+    const completedGoals: Goal[] = [];
+
+    goals.forEach(goal => {
+      const progress = (goal.valorAtual - goal.valorInicial) / (goal.valorFinal - goal.valorInicial);
+      const adjustedProgress = Math.min(Math.max(0, progress), 1);
+      
+      if (adjustedProgress >= 1) {
+        completedGoals.push(goal);
+      } else {
+        activeGoals.push(goal);
+      }
+    });
+
+    const sections: GoalSection[] = [];
+    
+    if (activeGoals.length > 0) {
+      sections.push({
+        title: 'Metas ativas',
+        data: activeGoals
+      });
+    }
+    
+    if (completedGoals.length > 0) {
+      sections.push({
+        title: 'Metas completadas',
+        data: completedGoals
+      });
+    }
+    
+    return sections;
+  }, [goals]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -186,6 +226,12 @@ const Goals: React.FC = () => {
     />
   );
 
+  const renderSectionHeader = ({ section }: { section: GoalSection }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{section.title}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -198,11 +244,13 @@ const Goals: React.FC = () => {
           <Text style={styles.loadingText}>Carregando...</Text>
         </View>
       ) : goals.length > 0 ? (
-        <FlatList
-          data={goals}
+        <SectionList
+          sections={goalSections}
           renderItem={renderGoalItem}
+          renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.goalsList}
+          stickySectionHeadersEnabled={false}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -268,6 +316,21 @@ const styles = StyleSheet.create({
   goalsList: {
     padding: 16,
     paddingBottom: 80,
+  },
+  sectionHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    backgroundColor: '#ddd0c2',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(85, 75, 70, 0.2)',
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#554b46',
+    fontFamily: 'Nunito',
   },
   emptyContainer: {
     flex: 1,
