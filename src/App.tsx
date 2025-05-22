@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { SafeAreaView, StatusBar, View, Image } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { SafeAreaView, StatusBar, View, Image, DeviceEventEmitter } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { initializeDatabse } from './db/initializeDatabase';
 import { Home } from './screen/home';
@@ -27,9 +27,16 @@ const pageLabels: Record<PageKey, string> = {
 
 type PageKey = 'home' | 'notas' | 'tarefas' | 'metas' | 'config';
 
+interface NavigationParams {
+  viewNoteId?: number;
+  viewTaskId?: number;
+  viewGoalId?: number;
+}
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<PageKey>('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const [navigationParams, setNavigationParams] = useState<NavigationParams>({});
   
   // Carrega todas as fontes necessárias para o app
   const [fontsLoaded] = useFonts({
@@ -38,6 +45,29 @@ export default function App() {
     'Merriweather': require('./assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf'),
     'Nunito': require('./assets/fonts/Nunito-VariableFont_wght.ttf'),
   });
+
+  // Listen for custom navigation events
+  useEffect(() => {
+    const handleNavigation = (data: any) => {
+      const { screen, params } = data;
+      
+      // Update navigation params
+      setNavigationParams(params || {});
+      
+      // Navigate to the requested screen
+      if (screen && Object.keys(pageLabels).includes(screen)) {
+        setCurrentScreen(screen as PageKey);
+      }
+    };
+
+    // Add event listener using DeviceEventEmitter
+    const subscription = DeviceEventEmitter.addListener('navigateToScreen', handleNavigation);
+
+    // Clean up
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Esconde a splash screen quando as fontes estiverem carregadas
   const onLayoutRootView = useCallback(async () => {
@@ -55,19 +85,20 @@ export default function App() {
     setSearchQuery(query);
   };
 
+  // Create components with the appropriate props
   let PageComponent = null;
   switch (currentScreen) {
     case 'home':
       PageComponent = <Home />;
       break;
     case 'notas':
-      PageComponent = <Notes />;
+      PageComponent = <Notes initialViewNoteId={navigationParams.viewNoteId} />;
       break;
     case 'tarefas':
-      PageComponent = <Tasks />;
+      PageComponent = <Tasks initialViewTaskId={navigationParams.viewTaskId} />;
       break;
     case 'metas':
-      PageComponent = <Goals />;
+      PageComponent = <Goals initialViewGoalId={navigationParams.viewGoalId} />;
       break;
     case 'config':
       PageComponent = <Config />;
@@ -111,7 +142,11 @@ export default function App() {
             </View>
           )}
           {PageComponent}
-          <Footer current={currentScreen} onNavigate={screen => setCurrentScreen(screen as PageKey)} />
+          <Footer current={currentScreen} onNavigate={screen => {
+            setCurrentScreen(screen as PageKey);
+            // Clear navigation params when manually navigating
+            setNavigationParams({});
+          }} />
         </SafeAreaView>
       </SQLite.SQLiteProvider>
     </>

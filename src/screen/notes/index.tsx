@@ -9,7 +9,11 @@ import NoteFormModal from '../../components/NoteFormModal';
 import SearchBar from '../../components/search';
 import { Tag } from '../../db/services/tagService';
 
-const Notes: React.FC = () => {
+interface NotesProps {
+  initialViewNoteId?: number;
+}
+
+const Notes: React.FC<NotesProps> = ({ initialViewNoteId }) => {
   const db = useSQLiteContext();
   const noteService = new NoteService(db);
   
@@ -28,6 +32,11 @@ const Notes: React.FC = () => {
         setIsLoading(true);
         // carregar as notas
         await loadNotes();
+        
+        // Se foi fornecido um ID inicial para visualizar, buscar e mostrar essa nota
+        if (initialViewNoteId) {
+          await showInitialNote(initialViewNoteId);
+        }
       } catch (error) {
         console.error('Erro ao inicializar:', error);
       } finally {
@@ -36,7 +45,19 @@ const Notes: React.FC = () => {
     };
     
     initialize();
-  }, []);
+  }, [initialViewNoteId]);
+
+  const showInitialNote = async (noteId: number) => {
+    try {
+      const note = await noteService.getNoteById(noteId);
+      if (note) {
+        setSelectedNote(note);
+        setDetailModalVisible(true);
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar nota ID ${noteId}:`, error);
+    }
+  };
 
   const loadNotes = async () => {
     try {

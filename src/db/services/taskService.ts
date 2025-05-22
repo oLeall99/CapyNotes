@@ -261,4 +261,27 @@ export class TaskService {
       throw error;
     }
   }
+
+  // Buscar tarefas favoritadas
+  async getFavoritedTasks(): Promise<Task[]> {
+    try {
+      const tasks = await this.db.getAllAsync<Task>(
+        `SELECT * FROM tasks 
+         WHERE isFavorite = 1
+         ORDER BY updatedAt DESC`
+      );
+      
+      // Obter tags para cada tarefa
+      for (const task of tasks) {
+        if (task.id) {
+          task.tags = await this.getTaskTagsById(task.id);
+        }
+      }
+      
+      return tasks;
+    } catch (error) {
+      console.error('Erro ao buscar tarefas favoritadas:', error);
+      throw error;
+    }
+  }
 } 

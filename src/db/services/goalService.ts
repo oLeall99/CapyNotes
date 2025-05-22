@@ -245,4 +245,27 @@ export class GoalService {
       throw error;
     }
   }
+
+  // Buscar metas favoritadas
+  async getFavoritedGoals(): Promise<Goal[]> {
+    try {
+      const goals = await this.db.getAllAsync<Goal>(
+        `SELECT * FROM goals 
+         WHERE isFavorite = 1
+         ORDER BY updatedAt DESC`
+      );
+      
+      // Obter tags para cada meta
+      for (const goal of goals) {
+        if (goal.id) {
+          goal.tags = await this.getGoalTagsById(goal.id);
+        }
+      }
+      
+      return goals;
+    } catch (error) {
+      console.error('Erro ao buscar metas favoritadas:', error);
+      throw error;
+    }
+  }
 } 

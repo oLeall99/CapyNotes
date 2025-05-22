@@ -219,4 +219,27 @@ export class NoteService {
       throw error;
     }
   }
+
+  // Buscar notas favoritadas
+  async getFavoritedNotes(): Promise<Note[]> {
+    try {
+      const notes = await this.db.getAllAsync<Note>(
+        `SELECT * FROM notes 
+         WHERE isFavorite = 1
+         ORDER BY updatedAt DESC`
+      );
+      
+      // Obter tags para cada nota
+      for (const note of notes) {
+        if (note.id) {
+          note.tags = await this.getNoteTagsById(note.id);
+        }
+      }
+      
+      return notes;
+    } catch (error) {
+      console.error('Erro ao buscar notas favoritadas:', error);
+      throw error;
+    }
+  }
 } 
