@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SectionLis
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Goal, GoalService } from '../../db/services/goalService';
-import { updateGoalTable } from '../../db/migrations/updateGoalTable';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import GoalDetailModal from '../../components/GoalDetailModal';
 import GoalFormModal from '../../components/GoalFormModal';
@@ -67,11 +66,7 @@ const Goals: React.FC = () => {
     const initialize = async () => {
       try {
         setIsLoading(true);
-        
-        // Executar migração para atualizar a estrutura da tabela goals, se necessário
-        await updateGoalTable(db);
-        
-        // Depois de garantir que a tabela está atualizada, carregar as metas
+        // carregar as metas
         await loadGoals();
       } catch (error) {
         console.error('Erro ao inicializar:', error);

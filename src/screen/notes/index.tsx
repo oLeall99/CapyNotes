@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Note, NoteService } from '../../db/services/noteService';
-import { addImageColumn } from '../../db/migrations/addImageColumn';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import NoteDetailModal from '../../components/NoteDetailModal';
 import NoteFormModal from '../../components/NoteFormModal';
@@ -26,11 +25,7 @@ const Notes: React.FC = () => {
     const initialize = async () => {
       try {
         setIsLoading(true);
-        
-        // Executar migração para adicionar a coluna imagem, se necessário
-        await addImageColumn(db);
-        
-        // Depois de garantir que a coluna existe, carregar as notas
+        // carregar as notas
         await loadNotes();
       } catch (error) {
         console.error('Erro ao inicializar:', error);
