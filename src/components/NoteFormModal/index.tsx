@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Image } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Note } from '../../db/services/noteService';
+import { Tag, TagService } from '../../db/services/tagService';
+import { useSQLiteContext } from 'expo-sqlite';
 
 interface NoteFormModalProps {
   visible: boolean;
   note: Note | null;
   onClose: () => void;
-  onSave: (titulo: string, conteudo: string, imagem: string | null) => void;
+  onSave: (titulo: string, conteudo: string, imagem: string | null, tags: Tag[]) => void;
 }
 
 const NoteFormModal: React.FC<NoteFormModalProps> = ({
@@ -17,24 +19,50 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
   onClose,
   onSave
 }) => {
+  const db = useSQLiteContext();
+  const tagService = new TagService(db);
+  
   const [titulo, setTitulo] = useState('');
   const [conteudo, setConteudo] = useState('');
   const [imagem, setImagem] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [isTagsLoading, setIsTagsLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      loadTags();
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (note) {
       setTitulo(note.titulo);
       setConteudo(note.conteudo || '');
       setImagem(note.imagem || null);
+      setSelectedTags(note.tags || []);
     } else {
       resetForm();
     }
   }, [note, visible]);
 
+  const loadTags = async () => {
+    try {
+      setIsTagsLoading(true);
+      const tags = await tagService.getAllTags();
+      setAvailableTags(tags);
+    } catch (error) {
+      console.error('Erro ao carregar tags:', error);
+    } finally {
+      setIsTagsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setTitulo('');
     setConteudo('');
     setImagem(null);
+    setSelectedTags([]);
   };
 
   const handleSave = () => {
@@ -43,7 +71,7 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
       return;
     }
     
-    onSave(titulo, conteudo, imagem);
+    onSave(titulo, conteudo, imagem, selectedTags);
     resetForm();
   };
 
@@ -64,6 +92,39 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
     resetForm();
     onClose();
   };
+
+  const toggleTagSelection = (tag: Tag) => {
+    if (isTagSelected(tag)) {
+      // Remove a tag da seleção
+      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+    } else {
+      // Adiciona a tag à seleção
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const isTagSelected = (tag: Tag): boolean => {
+    return selectedTags.some(t => t.id === tag.id);
+  };
+
+  const renderTagItem = (tag: Tag) => (
+    <TouchableOpacity
+      key={tag.id}
+      style={[
+        styles.tagItem,
+        { backgroundColor: isTagSelected(tag) ? tag.color || '#808080' : 'transparent' },
+        { borderColor: tag.color || '#808080' }
+      ]}
+      onPress={() => toggleTagSelection(tag)}
+    >
+      <Text style={[
+        styles.tagText,
+        { color: isTagSelected(tag) ? '#fff' : tag.color || '#808080' }
+      ]}>
+        {tag.titulo}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <Modal
@@ -106,7 +167,7 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
             />
 
             <View style={styles.imageSection}>
-              <Text style={styles.imageLabel}>Imagem</Text>
+              <Text style={styles.sectionLabel}>Imagem</Text>
               <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
                 {imagem ? (
                   <View style={styles.imageContainer}>
@@ -125,6 +186,22 @@ const NoteFormModal: React.FC<NoteFormModalProps> = ({
                   </View>
                 )}
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.tagsSection}>
+              <Text style={styles.sectionLabel}>Tags</Text>
+              {isTagsLoading ? (
+                <Text style={styles.loadingText}>Carregando tags...</Text>
+              ) : availableTags.length > 0 ? (
+                <View style={styles.tagsContainer}>
+                  {availableTags.map(tag => renderTagItem(tag))}
+                </View>
+              ) : (
+                <View style={styles.noTagsContainer}>
+                  <Text style={styles.noTagsText}>Nenhuma tag disponível</Text>
+                  <Text style={styles.noTagsSubText}>Crie tags na tela de configurações</Text>
+                </View>
+              )}
             </View>
             
             <TouchableOpacity 
@@ -188,13 +265,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Nunito',
   },
-  imageLabel: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#777',
+  sectionLabel: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#554b46',
     fontWeight: 'bold',
+    fontFamily: 'Nunito',
   },
   imageSection: {
+    marginTop: 5,
+    marginBottom: 15,
+    padding: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  tagsSection: {
     marginTop: 5,
     marginBottom: 15,
     padding: 5,
@@ -247,6 +332,7 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     marginTop: 10,
     color: '#aaa',
+    fontFamily: 'Nunito',
   },
   removeImageButton: {
     position: 'absolute',
@@ -256,6 +342,48 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 5,
     zIndex: 1,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  tagItem: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    margin: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagText: {
+    fontSize: 12,
+    fontFamily: 'Nunito',
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#888',
+    marginVertical: 10,
+    fontFamily: 'Nunito',
+  },
+  noTagsContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    padding: 10,
+  },
+  noTagsText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Nunito',
+  },
+  noTagsSubText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 5,
+    fontFamily: 'Nunito',
   },
   saveButton: {
     backgroundColor: '#554b46',

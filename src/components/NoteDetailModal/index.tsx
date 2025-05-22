@@ -69,6 +69,23 @@ const NoteDetailModal: React.FC<NoteDetailModalProps> = ({
               />
             ) : null}
             
+            {note?.tags && note.tags.length > 0 && (
+              <View style={styles.tagsSection}>
+                <Text style={styles.sectionTitle}>Tags</Text>
+                <View style={styles.tagsContainer}>
+                  {note.tags.map(tag => (
+                    <View 
+                      key={tag.id} 
+                      style={[styles.tagBadge, { backgroundColor: tag.color || '#808080' }]}
+                    >
+                      <Text style={styles.tagText}>{tag.titulo}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            <Text style={styles.sectionTitle}>Conteúdo</Text>
             {note?.conteudo ? (
               <Text style={styles.detailContent}>{note.conteudo}</Text>
             ) : (
@@ -141,6 +158,34 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     marginTop: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#554b46',
+    marginBottom: 8,
+    marginTop: 8,
+    fontFamily: 'Nunito',
+  },
+  tagsSection: {
+    marginBottom: 16,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  tagBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'Nunito',
   },
   detailImage: {
     width: '100%',
