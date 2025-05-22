@@ -85,7 +85,7 @@ export default function App() {
           barStyle="dark-content"
         />
         <SafeAreaView 
-          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 0 }}
+          style={{ flex: 1, backgroundColor: '#ddd0c2', alignItems: 'center', paddingTop: 0, paddingBottom: 60 }}
           onLayout={onLayoutRootView}>
           <View style={{ 
             width: '100%', 
