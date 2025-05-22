@@ -17,7 +17,11 @@ import TaskFormModal from '../../components/TaskFormModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import SearchBar from '../../components/search';
 
-const Tasks: React.FC = () => {
+interface TasksProps {
+  initialViewTaskId?: number;
+}
+
+const Tasks: React.FC<TasksProps> = ({ initialViewTaskId }) => {
   const db = useSQLiteContext();
   const taskService = new TaskService(db);
   
@@ -33,8 +37,36 @@ const Tasks: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    loadTasks();
-  }, []);
+    const initialize = async () => {
+      try {
+        setIsLoading(true);
+        await loadTasks();
+        
+        // Se foi fornecido um ID inicial para visualizar, mostrar essa tarefa
+        if (initialViewTaskId) {
+          await showInitialTask(initialViewTaskId);
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initialize();
+  }, [initialViewTaskId]);
+
+  const showInitialTask = async (taskId: number) => {
+    try {
+      const task = await taskService.getTaskById(taskId);
+      if (task) {
+        setSelectedTask(task);
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar tarefa ID ${taskId}:`, error);
+    }
+  };
 
   const loadTasks = async () => {
     try {

@@ -245,4 +245,52 @@ export class GoalService {
       throw error;
     }
   }
+
+  // Buscar metas favoritadas
+  async getFavoritedGoals(): Promise<Goal[]> {
+    try {
+      const goals = await this.db.getAllAsync<Goal>(
+        `SELECT * FROM goals 
+         WHERE isFavorite = 1
+         ORDER BY updatedAt DESC`
+      );
+      
+      // Obter tags para cada meta
+      for (const goal of goals) {
+        if (goal.id) {
+          goal.tags = await this.getGoalTagsById(goal.id);
+        }
+      }
+      
+      return goals;
+    } catch (error) {
+      console.error('Erro ao buscar metas favoritadas:', error);
+      throw error;
+    }
+  }
+
+  // Buscar metas por tag
+  async searchGoalsByTag(tagId: number): Promise<Goal[]> {
+    try {
+      const goals = await this.db.getAllAsync<Goal>(
+        `SELECT g.* FROM goals g
+         INNER JOIN goal_tags gt ON g.id = gt.goal_id
+         WHERE gt.tag_id = ?
+         ORDER BY g.updatedAt DESC`,
+        [tagId]
+      );
+      
+      // Obter tags para cada meta
+      for (const goal of goals) {
+        if (goal.id) {
+          goal.tags = await this.getGoalTagsById(goal.id);
+        }
+      }
+      
+      return goals;
+    } catch (error) {
+      console.error('Erro ao buscar metas por tag:', error);
+      throw error;
+    }
+  }
 } 

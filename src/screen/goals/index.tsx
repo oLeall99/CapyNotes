@@ -15,7 +15,11 @@ interface GoalSection {
   data: Goal[];
 }
 
-const Goals: React.FC = () => {
+interface GoalsProps {
+  initialViewGoalId?: number;
+}
+
+const Goals: React.FC<GoalsProps> = ({ initialViewGoalId }) => {
   const db = useSQLiteContext();
   const goalService = new GoalService(db);
   
@@ -67,8 +71,12 @@ const Goals: React.FC = () => {
     const initialize = async () => {
       try {
         setIsLoading(true);
-        // carregar as metas
         await loadGoals();
+        
+        // Se foi fornecido um ID inicial para visualizar, buscar e mostrar essa meta
+        if (initialViewGoalId) {
+          await showInitialGoal(initialViewGoalId);
+        }
       } catch (error) {
         console.error('Erro ao inicializar:', error);
       } finally {
@@ -77,7 +85,7 @@ const Goals: React.FC = () => {
     };
     
     initialize();
-  }, []);
+  }, [initialViewGoalId]);
 
   const loadGoals = async () => {
     try {
@@ -85,6 +93,18 @@ const Goals: React.FC = () => {
       setGoals(loadedGoals);
     } catch (error) {
       console.error('Erro ao carregar metas:', error);
+    }
+  };
+
+  const showInitialGoal = async (goalId: number) => {
+    try {
+      const goal = await goalService.getGoalById(goalId);
+      if (goal) {
+        setSelectedGoal(goal);
+        setDetailModalVisible(true);
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar meta ID ${goalId}:`, error);
     }
   };
 
