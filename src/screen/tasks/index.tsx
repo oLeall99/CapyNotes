@@ -266,7 +266,7 @@ const Tasks: React.FC = () => {
       ) : (
         <ScrollView 
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 70 }}
+          contentContainerStyle={{ paddingBottom: 80 }}
         >
           {/* Seção de Tarefas a Fazer */}
           <View style={styles.section}>
@@ -337,8 +337,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#ddd0c2',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   section: {
     marginBottom: 6,

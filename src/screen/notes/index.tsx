@@ -296,6 +296,7 @@ const styles = StyleSheet.create({
   },
   notesList: {
     padding: 16,
+    paddingBottom: 80,
   },
   emptyContainer: {
     flex: 1,
@@ -418,6 +419,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 8,
+    backgroundColor: '#ddd0c2',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
 });
 
